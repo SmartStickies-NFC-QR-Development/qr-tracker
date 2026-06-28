@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You found a Golden Ticket!</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+  <div class="card reward">
+    <div class="eyebrow">SmartStickies</div>
+    <div class="ticket">
+      <div class="ticket-label">Golden Ticket</div>
+      <div class="ticket-title">You won!</div>
+      <div>Show this code at checkout</div>
+      <div class="coupon">{{ coupon }}</div>
+    </div>
+    <div class="product-name">{{ product.name }}</div>
+    <div class="subtle">Unlocked on the tag for this item.</div>
+  </div>
+</body>
+</html>

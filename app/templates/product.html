@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ product.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">SmartStickies</div>
+    <div class="product-name">{{ product.name }}</div>
+    <div class="price">{{ product.price }}</div>
+    {% if note %}
+      <div class="note">{{ note }}</div>
+    {% else %}
+      <div class="note">Tap more items around the store. Some hide a golden ticket.</div>
+    {% endif %}
+  </div>
+</body>
+</html>

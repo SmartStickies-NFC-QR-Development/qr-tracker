@@ -1,55 +1,30 @@
-{% extends 'base.html' %}
-
-{% block header %}
-<div style="padding: 20px">
-  <h1>{% block title %}
-    {% if this_qr %}
-      {{ this_qr.name }}
-    {% else %}
-    Index
-    {% endif %}
-    {% endblock %}
-  </h1>
-</div>
-{% endblock %}
-{% block content %}
-
-<div>
-  <p>
-    If you have reached this page, you have scanned a QR code that you found somewhere.
-    This is part of an information security experiment.
-    None of your personal data has been collected, beyond what is sent to any website you visit.
-    This page and the QR code you scanned are not dangerous, but others could be.
-  </p>
-  <p>
-    QR codes could be used in "phishing" attacks <a href="https://en.wikipedia.org/wiki/Phishing">https://en.wikipedia.org/wiki/Phishing</a>
-    Instead of this page, you could have asked for login information that could be used to steal information.
-
-    My hope is that this will remind people to treat QR codes the same as random links sent via email.
-
-    The code that powers this page is available on < a href="https://github.com/haicenhacks/qr-tracker">github</a>.
-      For concerns
-
-
-      The extent of information collected is shown below:
-  </p>
-  <div class="table-responsive">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>IP address</th>
-          <th>User Agent</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>2025-08-09 23:14:01.851221</td>
-          <td>127.0.x.x</td>
-          <td>Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0</td>
-        </tr>
-      </tbody>
-    </table>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStickies test</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">SmartStickies / Test bench</div>
+    <div class="product-name">Tap a tag</div>
+    <div class="subtle">
+      {% if won %}You have already claimed your golden ticket. Use /reset to test again.
+      {% else %}Each link is one NFC tag or QR code. Gold ones win.{% endif %}
+    </div>
+    <ul class="tag-list">
+      {% for tag_id, p in products.items() %}
+        <li>
+          <a href="{{ url_for('tag', tag_id=tag_id) }}">
+            <span>{{ tag_id }} &middot; {{ p.name }}</span>
+            {% if p.golden %}<span class="gold-dot">GOLDEN</span>{% endif %}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    <a class="reset-link" href="{{ url_for('reset') }}">Reset my cookie</a>
   </div>
-
-{% endblock %}
+</body>
+</html>
