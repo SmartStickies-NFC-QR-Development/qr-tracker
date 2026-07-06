@@ -67,6 +67,12 @@ def tag(tag_id):
                                note="You have already claimed a golden ticket today. Come back tomorrow!")
 
     if product["golden"]:
+        # Check if this member already obtained this exact ticket
+        existing_tags = [t["tag_id"] for t in session.get("tickets", [])]
+        if tag_id in existing_tags:
+            return render_template("product.html", product=product,
+                                   note="You already obtained this ticket. Check your portal!")
+        
         session["won"] = True
         coupon = "GOLD-" + session["shopper_id"][:6].upper()
         
