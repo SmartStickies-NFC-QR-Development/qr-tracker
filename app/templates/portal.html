@@ -13,7 +13,10 @@
     .header h1{font-size:28px;font-weight:700;margin-bottom:8px;}
     .header p{color:var(--muted);font-size:14px;}
     .tickets-list{display:flex;flex-direction:column;gap:16px;}
-    .ticket-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+    .ticket-link{text-decoration:none;color:inherit;display:block;cursor:pointer;}
+    .ticket-link:active .ticket-card{transform:scale(0.98);}
+    .ticket-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:all 0.2s ease;}
+    .ticket-link:hover .ticket-card{box-shadow:0 4px 16px rgba(0,0,0,0.1);border-color:var(--gold);}
     .ticket-card.empty{text-align:center;padding:40px 20px;color:var(--muted);}
     .ticket-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;}
     .product-info h3{font-size:16px;font-weight:700;margin:0 0 4px;}
@@ -43,19 +46,21 @@
     <div class="tickets-list">
       {% if tickets %}
         {% for ticket in tickets %}
-          <div class="ticket-card">
-            <div class="ticket-header">
-              <div class="product-info">
-                <h3>{{ ticket.product_name }}</h3>
-                <div class="price">{{ ticket.price }}</div>
-                <div class="claimed-at">Claimed on {{ ticket.claimed_at[:10] }}</div>
+          <a href="{{ url_for('obtain_ticket', ticket_index=loop.index0) }}" class="ticket-link">
+            <div class="ticket-card">
+              <div class="ticket-header">
+                <div class="product-info">
+                  <h3>{{ ticket.product_name }}</h3>
+                  <div class="price">{{ ticket.price }}</div>
+                  <div class="claimed-at">Claimed on {{ ticket.claimed_at[:10] }}</div>
+                </div>
+              </div>
+              <div class="coupon-box">
+                <div class="coupon-label">Use this code at checkout:</div>
+                <div class="coupon-code">{{ ticket.coupon }}</div>
               </div>
             </div>
-            <div class="coupon-box">
-              <div class="coupon-label">Use this code at checkout:</div>
-              <div class="coupon-code">{{ ticket.coupon }}</div>
-            </div>
-          </div>
+          </a>
         {% endfor %}
       {% else %}
         <div class="ticket-card empty">

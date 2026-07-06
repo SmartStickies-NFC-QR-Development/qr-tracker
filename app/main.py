@@ -93,5 +93,30 @@ def portal():
     return render_template("portal.html", tickets=tickets, shopper_id=shopper_id)
 
 
+@app.route("/ticket/<ticket_index>")
+def obtain_ticket(ticket_index):
+    """Open a saved ticket to obtain/redeem it (show the reward experience)."""
+    get_shopper()
+    tickets = session.get("tickets", [])
+    
+    try:
+        index = int(ticket_index)
+        if 0 <= index < len(tickets):
+            ticket = tickets[index]
+            # Find the original product for context
+            product = PRODUCTS.get(ticket["tag_id"], {
+                "name": ticket["product_name"],
+                "price": ticket["price"],
+                "golden": True
+            })
+            return render_template("reward.html", product=product, coupon=ticket["coupon"], ticket_index=index)
+    except (ValueError, IndexError):
+        pass
+    
+    return render_template("product.html",
+                           product={"name": "Invalid ticket", "price": "N/A"},
+                           note="This ticket could not be found.")
+
+
 if __name__ == "__main__":
     app.run(debug=True)
