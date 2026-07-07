@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <style>
+    :root{--ink:#1a1a1a;--paper:#faf8f4;--line:#e4ded2;--muted:#7a7468;--gold:#c79a2e;--gold-deep:#9a7411;--gold-glow:#f3d985;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;padding:24px;line-height:1.5;}
+    .container{max-width:700px;margin:0 auto;}
+    .header{margin-bottom:32px;}
+    .header h1{font-size:28px;font-weight:700;margin-bottom:8px;}
+    .header p{color:var(--muted);font-size:14px;}
+    .checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;}
+    @media (max-width:600px){.checkout-grid{grid-template-columns:1fr;}}
+    .section{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;}
+    .section-title{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:16px;}
+    .order-items{display:flex;flex-direction:column;gap:10px;}
+    .order-item{font-size:13px;display:flex;justify-content:space-between;}
+    .order-item-name{font-weight:500;}
+    .order-item-price{color:var(--muted);}
+    .divider{border-top:1px solid var(--line);margin:12px 0;}
+    .total-row{display:flex;justify-content:space-between;font-weight:700;font-size:16px;}
+    .coupons-list{display:flex;flex-direction:column;gap:8px;}
+    .coupon-card{background:linear-gradient(135deg,var(--gold-glow),var(--gold) 55%,var(--gold-deep));color:#2a1f00;padding:12px;border-radius:8px;font-size:12px;}
+    .coupon-code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-weight:700;font-size:14px;margin-top:4px;}
+    .coupon-product{font-size:11px;opacity:0.9;margin-top:2px;}
+    .empty-coupons{font-size:13px;color:var(--muted);font-style:italic;}
+    .order-summary{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:24px;}
+    .summary-row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px;}
+    .summary-row.total{font-weight:700;font-size:18px;color:var(--ink);border-top:2px solid var(--line);padding-top:12px;margin-top:12px;}
+    .actions{display:flex;gap:12px;}
+    .btn{display:inline-block;padding:14px 20px;border-radius:8px;text-decoration:none;font-weight:600;text-align:center;transition:all 0.2s;cursor:pointer;border:none;font-size:14px;flex:1;}
+    .btn-complete{background:var(--gold);color:#2a1f00;}
+    .btn-complete:hover{background:var(--gold-deep);}
+    .btn-back{background:#fff;color:var(--ink);border:1px solid var(--line);}
+    .btn-back:hover{background:var(--paper);}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Checkout</h1>
+      <p>Review your order before completing purchase</p>
+    </div>
+
+    <div class="checkout-grid">
+      <div class="section">
+        <div class="section-title">Order Items</div>
+        {% if cart_items %}
+          <div class="order-items">
+            {% for item in cart_items %}
+              <div class="order-item">
+                <span class="order-item-name">{{ item.name }}</span>
+                <span class="order-item-price">{{ item.price }}</span>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="divider"></div>
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span>{{ cart_total }}</span>
+          </div>
+        {% else %}
+          <p style="font-size:13px;color:var(--muted);">No items in order.</p>
+        {% endif %}
+      </div>
+
+      <div class="section">
+        <div class="section-title">Golden Tickets</div>
+        {% if tickets %}
+          <div class="coupons-list">
+            {% for ticket in tickets %}
+              <div class="coupon-card">
+                <div class="coupon-code">{{ ticket.coupon }}</div>
+                <div class="coupon-product">{{ ticket.product_name }}</div>
+              </div>
+            {% endfor %}
+          </div>
+          <p style="font-size:11px;color:#2a1f00;opacity:0.8;margin-top:8px;">Present these codes at the register to apply your discounts.</p>
+        {% else %}
+          <p class="empty-coupons">No golden tickets to apply.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="order-summary">
+      <div class="summary-row">
+        <span>Subtotal:</span>
+        <span>{{ cart_total }}</span>
+      </div>
+      {% if tickets %}
+        <div class="summary-row">
+          <span>Golden Tickets Applied:</span>
+          <span style="color:var(--gold);">{{ tickets|length }}</span>
+        </div>
+      {% endif %}
+      <div class="summary-row total">
+        <span>Total:</span>
+        <span>{{ cart_total }}</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="{{ url_for('view_cart') }}" class="btn btn-back">← Back to Cart</a>
+      <button class="btn btn-complete" onclick="alert('Order placed! Use your golden tickets at the register.')">Complete Purchase</button>
+    </div>
+  </div>
+</body>
+</html>

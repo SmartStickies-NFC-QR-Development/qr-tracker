@@ -22,10 +22,11 @@ PRODUCTS = {
 
 
 def get_shopper():
-    """Identify the current shopper and initialize their ticket collection."""
+    """Identify the current shopper and initialize their ticket collection and cart."""
     if "shopper_id" not in session:
         session["shopper_id"] = str(uuid.uuid4())
         session["tickets"] = []  # member's collection of golden tickets
+        session["cart"] = []     # member's shopping cart
     return session["shopper_id"]
 
 
@@ -59,21 +60,16 @@ def tag(tag_id):
     if product is None:
         return render_template("product.html",
                                product={"name": "Unknown item", "price": "N/A"},
+                               tag_id=None,
                                note="This tag is not registered in the store. Ask a team member.")
-
-    # Check if this shopper has already won a golden ticket today
-    if session.get("won"):
-        return render_template("product.html", product=product,
-                               note="You have already claimed a golden ticket today. Come back tomorrow!")
 
     if product["golden"]:
         # Check if this member already obtained this exact ticket
         existing_tags = [t["tag_id"] for t in session.get("tickets", [])]
         if tag_id in existing_tags:
-            return render_template("product.html", product=product,
+            return render_template("product.html", product=product, tag_id=None,
                                    note="You already obtained this ticket. Check your portal!")
         
-        session["won"] = True
         coupon = "GOLD-" + session["shopper_id"][:6].upper()
         
         # Save the golden ticket to the member's collection
@@ -81,7 +77,7 @@ def tag(tag_id):
         
         return render_template("reward.html", product=product, coupon=coupon)
 
-    return render_template("product.html", product=product, note=None)
+    return render_template("product.html", product=product, tag_id=tag_id, note=None)
 
 
 @app.route("/reset")
@@ -122,6 +118,74 @@ def obtain_ticket(ticket_index):
     return render_template("product.html",
                            product={"name": "Invalid ticket", "price": "N/A"},
                            note="This ticket could not be found.")
+
+
+@app.route("/cart")
+def view_cart():
+    """View shopping cart and golden tickets."""
+    get_shopper()
+    cart = session.get("cart", [])
+    tickets = session.get("tickets", [])
+    
+    # Calculate cart totals
+    cart_total = sum(float(item["price"].replace("$", "")) for item in cart)
+    
+    return render_template("cart.html", cart_items=cart, tickets=tickets, 
+                           cart_total=f"${cart_total:.2f}", cart_count=len(cart))
+
+
+@app.route("/cart/add/<tag_id>")
+def add_to_cart(tag_id):
+    """Add a product to the shopping cart."""
+    get_shopper()
+    product = PRODUCTS.get(tag_id)
+    
+    if product is None or product["golden"]:
+        # Can't add unknown items or golden tickets to cart via this route
+        return redirect(url_for("tag", tag_id=tag_id))
+    
+    if "cart" not in session:
+        session["cart"] = []
+    
+    # Add item with a unique ID for removal
+    cart_item = {
+        "tag_id": tag_id,
+        "name": product["name"],
+        "price": product["price"],
+        "added_at": datetime.now().isoformat(),
+    }
+    session["cart"].append(cart_item)
+    session.modified = True
+    
+    return render_template("product.html", product=product, 
+                           note=f"{product['name']} added to cart!")
+
+
+@app.route("/cart/remove/<int:item_index>")
+def remove_from_cart(item_index):
+    """Remove an item from the shopping cart."""
+    get_shopper()
+    cart = session.get("cart", [])
+    
+    if 0 <= item_index < len(cart):
+        cart.pop(item_index)
+        session.modified = True
+    
+    return redirect(url_for("view_cart"))
+
+
+@app.route("/checkout")
+def checkout():
+    """Checkout page: show cart items and applicable golden ticket coupons."""
+    get_shopper()
+    cart = session.get("cart", [])
+    tickets = session.get("tickets", [])
+    
+    # Calculate totals
+    cart_total = sum(float(item["price"].replace("$", "")) for item in cart)
+    
+    return render_template("checkout.html", cart_items=cart, tickets=tickets,
+                           cart_total=f"${cart_total:.2f}")
 
 
 if __name__ == "__main__":
