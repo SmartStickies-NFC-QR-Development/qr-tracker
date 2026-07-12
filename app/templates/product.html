@@ -40,6 +40,9 @@
     {% else %}
       <div class="note">Tap more items around the store. Some hide a golden ticket.</div>
     {% endif %}
+    {% if tag_id and not note %}
+      <a href="{{ url_for('add_to_cart', tag_id=tag_id) }}" style="display:inline-block;margin-top:16px;padding:10px 16px;background:var(--gold);color:#2a1f00;text-decoration:none;border-radius:8px;font-weight:600;font-size:13px;">Add to Cart</a>
+    {% endif %}
   </div>
 </body>
 </html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart</title>
+  <style>
+    :root{--ink:#1a1a1a;--paper:#faf8f4;--line:#e4ded2;--muted:#7a7468;--gold:#c79a2e;--gold-deep:#9a7411;--gold-glow:#f3d985;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;padding:24px;line-height:1.5;}
+    .container{max-width:700px;margin:0 auto;}
+    .header{margin-bottom:32px;}
+    .header h1{font-size:28px;font-weight:700;margin-bottom:8px;}
+    .header p{color:var(--muted);font-size:14px;}
+    .section{margin-bottom:32px;}
+    .section-title{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--ink);}
+    .cart-items{display:flex;flex-direction:column;gap:12px;}
+    .cart-item{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+    .item-info h3{font-size:14px;font-weight:600;margin:0;}
+    .item-price{color:var(--muted);font-size:13px;}
+    .item-actions{display:flex;gap:8px;align-items:center;}
+    .remove-btn{background:none;border:1px solid var(--line);color:var(--muted);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;transition:all 0.2s;}
+    .remove-btn:hover{background:#fff3cd;color:var(--ink);}
+    .empty-state{text-align:center;padding:40px 20px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:10px;}
+    .summary{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px;}
+    .summary-row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px;}
+    .summary-row.total{font-weight:700;font-size:16px;color:var(--ink);border-top:1px solid var(--line);padding-top:12px;}
+    .tickets-preview{display:flex;flex-direction:column;gap:8px;}
+    .ticket-badge{display:inline-block;background:linear-gradient(135deg,var(--gold-glow),var(--gold) 55%,var(--gold-deep));color:#2a1f00;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:600;width:fit-content;}
+    .actions{display:flex;gap:12px;margin-top:24px;}
+    .btn{display:inline-block;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;text-align:center;transition:background 0.2s;cursor:pointer;border:none;font-size:14px;}
+    .btn-checkout{background:var(--gold);color:#2a1f00;flex:1;}
+    .btn-checkout:hover{background:var(--gold-deep);}
+    .btn-continue{background:#fff;color:var(--ink);border:1px solid var(--line);flex:1;}
+    .btn-continue:hover{background:var(--paper);}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Your Cart</h1>
+      <p>Items and coupons ready for checkout</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Items in Cart ({{ cart_count }})</div>
+      {% if cart_items %}
+        <div class="cart-items">
+          {% for item in cart_items %}
+            <div class="cart-item">
+              <div class="item-info">
+                <h3>{{ item.name }}</h3>
+                <div class="item-price">{{ item.price }}</div>
+              </div>
+              <div class="item-actions">
+                <a href="{{ url_for('remove_from_cart', item_index=loop.index0) }}" class="remove-btn">Remove</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>Your cart is empty. Tap items around the store to add them.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if tickets %}
+      <div class="section">
+        <div class="section-title">Your Golden Tickets ({{ tickets|length }})</div>
+        <div class="tickets-preview">
+          {% for ticket in tickets %}
+            <div class="ticket-badge">
+              {{ ticket.coupon }} — {{ ticket.product_name }}
+            </div>
+          {% endfor %}
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px;">Apply these coupons at checkout to redeem your rewards.</p>
+      </div>
+    {% endif %}
+
+    {% if cart_items %}
+      <div class="summary">
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span>{{ cart_total }}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total:</span>
+          <span>{{ cart_total }}</span>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px;">Golden ticket coupons can be applied at checkout.</p>
+      </div>
+    {% endif %}
+
+    <div class="actions">
+      <a href="{{ url_for('index') }}" class="btn btn-continue">Continue Shopping</a>
+      {% if cart_items %}
+        <a href="{{ url_for('checkout') }}" class="btn btn-checkout">Proceed to Checkout</a>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

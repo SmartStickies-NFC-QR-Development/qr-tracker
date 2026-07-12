@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In – SmartStickies</title>
+  <style>
+    :root{--ink:#1a1a1a;--paper:#faf8f4;--line:#e4ded2;--muted:#7a7468;--gold:#c79a2e;--gold-deep:#9a7411;--gold-glow:#f3d985;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;line-height:1.5;}
+    .container{width:100%;max-width:420px;}
+    .header{text-align:center;margin-bottom:32px;}
+    .header h1{font-size:28px;font-weight:700;margin-bottom:8px;}
+    .header p{color:var(--muted);font-size:14px;}
+    .form-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:32px;box-shadow:0 4px 12px rgba(0,0,0,0.06);}
+    .form-group{margin-bottom:20px;}
+    .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+    .form-group input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff;transition:border 0.2s;}
+    .form-group input:focus{outline:none;border-color:var(--gold);}
+    .submit-btn{width:100%;padding:12px;background:var(--gold);color:#2a1f00;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background 0.2s;}
+    .submit-btn:hover{background:var(--gold-deep);}
+    .footer-links{text-align:center;margin-top:20px;font-size:13px;color:var(--muted);}
+    .footer-links a{color:var(--gold-deep);text-decoration:none;font-weight:600;}
+    .footer-links a:hover{text-decoration:underline;}
+    .error{background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:16px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>SmartStickies Rewards</h1>
+      <p>Sign in to your account</p>
+    </div>
+
+    <div class="form-card">
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('login') }}">
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" required value="{{ email or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="submit-btn">Sign In</button>
+      </form>
+
+      <div class="footer-links">
+        Don't have an account? <a href="{{ url_for('register') }}">Create one</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
