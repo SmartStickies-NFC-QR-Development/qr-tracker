@@ -41,11 +41,12 @@
     </div>
     <div class="product-name">{{ product.name }}</div>
     <div class="subtle">Unlocked on the tag for this item.</div>
-    <div style="margin-top:20px;">
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+      <a href="{{ url_for('index') }}" style="font-size:13px;font-weight:600;text-decoration:none;color:#2a1f00;background:var(--gold);border-radius:8px;padding:9px 14px;">← Continue shopping</a>
       {% if ticket_index is not none %}
-        <a href="{{ url_for('portal') }}" style="display:inline-block;margin-top:12px;font-size:13px;color:var(--gold-deep);text-decoration:none;font-weight:600;">← Back to my tickets</a>
+        <a href="{{ url_for('portal') }}" style="font-size:13px;font-weight:600;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 14px;">Back to my tickets</a>
       {% else %}
-        <a href="{{ url_for('portal') }}" style="display:inline-block;margin-top:12px;font-size:13px;color:var(--gold-deep);text-decoration:none;font-weight:600;">View all your tickets →</a>
+        <a href="{{ url_for('portal') }}" style="font-size:13px;font-weight:600;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 14px;">View all your tickets</a>
       {% endif %}
     </div>
   </div>

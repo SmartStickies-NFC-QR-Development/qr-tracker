@@ -9,12 +9,45 @@ app.secret_key = "change-this-to-a-long-random-string-before-deploy"
 PUBLIC_ENDPOINTS = {"login", "register", "auth_complete", "logout", "static"}
 
 PRODUCTS = {
-    "A17": {"name": "Single-Origin Coffee Beans", "price": "$12.00", "golden": True},
-    "B02": {"name": "Oat Milk, 1L", "price": "$4.50", "golden": False},
-    "C04": {"name": "Dark Chocolate Bar", "price": "$6.00", "golden": True},
-    "D09": {"name": "Sparkling Water, 6-pack", "price": "$5.25", "golden": False},
-    "F22": {"name": "Aged Cheddar Wedge", "price": "$9.75", "golden": True},
+    # Produce
+    "P01": {"name": "Bananas, bunch", "price": "$1.80", "golden": False, "category": "Produce"},
+    "P02": {"name": "Gala Apples, 3 lb", "price": "$4.20", "golden": False, "category": "Produce"},
+    "P03": {"name": "Baby Spinach, 10 oz", "price": "$3.50", "golden": False, "category": "Produce"},
+    "P04": {"name": "Avocado", "price": "$1.25", "golden": True, "category": "Produce"},
+    # Bakery
+    "K01": {"name": "Sourdough Loaf", "price": "$4.75", "golden": False, "category": "Bakery"},
+    "K02": {"name": "Blueberry Muffins, 4-pack", "price": "$5.50", "golden": True, "category": "Bakery"},
+    "K03": {"name": "Everything Bagels, 6-pack", "price": "$4.00", "golden": False, "category": "Bakery"},
+    "K04": {"name": "Butter Croissant", "price": "$2.75", "golden": False, "category": "Bakery"},
+    # Dairy & Eggs
+    "D01": {"name": "Whole Milk, 1 gal", "price": "$3.90", "golden": False, "category": "Dairy & Eggs"},
+    "D02": {"name": "Large Eggs, dozen", "price": "$4.60", "golden": False, "category": "Dairy & Eggs"},
+    "D03": {"name": "Greek Yogurt, 32 oz", "price": "$5.25", "golden": False, "category": "Dairy & Eggs"},
+    "D04": {"name": "Aged Cheddar Wedge", "price": "$9.75", "golden": True, "category": "Dairy & Eggs"},
+    # Beverages
+    "B01": {"name": "Sparkling Water, 6-pack", "price": "$5.25", "golden": False, "category": "Beverages"},
+    "B02": {"name": "Cold Brew Coffee, 1L", "price": "$6.50", "golden": True, "category": "Beverages"},
+    "B03": {"name": "Orange Juice, 52 oz", "price": "$4.30", "golden": False, "category": "Beverages"},
+    "B04": {"name": "Green Tea, 20-pack", "price": "$3.75", "golden": False, "category": "Beverages"},
+    # Snacks
+    "S01": {"name": "Dark Chocolate Bar", "price": "$6.00", "golden": True, "category": "Snacks"},
+    "S02": {"name": "Kettle Potato Chips", "price": "$3.20", "golden": False, "category": "Snacks"},
+    "S03": {"name": "Trail Mix, 1 lb", "price": "$5.80", "golden": False, "category": "Snacks"},
+    "S04": {"name": "Sea Salt Pretzels", "price": "$2.90", "golden": False, "category": "Snacks"},
+    # Pantry
+    "A01": {"name": "Single-Origin Coffee Beans", "price": "$12.00", "golden": True, "category": "Pantry"},
+    "A02": {"name": "Extra-Virgin Olive Oil", "price": "$8.50", "golden": False, "category": "Pantry"},
+    "A03": {"name": "Penne Pasta, 1 lb", "price": "$1.95", "golden": False, "category": "Pantry"},
+    "A04": {"name": "Creamy Peanut Butter", "price": "$4.40", "golden": False, "category": "Pantry"},
 }
+
+
+def products_by_aisle():
+    """Group the catalog into aisles (categories) for the store page."""
+    aisles = {}
+    for tag_id, product in PRODUCTS.items():
+        aisles.setdefault(product["category"], []).append((tag_id, product))
+    return aisles
 
 
 def get_shopper():
@@ -89,7 +122,7 @@ def add_ticket_to_collection(tag_id, product, coupon):
 @app.route("/")
 def index():
     get_shopper()
-    return render_template("index.html", products=PRODUCTS,
+    return render_template("index.html", aisles=products_by_aisle(),
                            won=session.get("won", False))
 
 
