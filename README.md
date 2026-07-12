@@ -1,5 +1,11 @@
 # QR Tracker
 
+## Golden Ticket version
+
+This fork adapts the original QR tracker into a cookie-based "Golden Ticket" prototype called SmartStickies. The core idea — scan a URL and branch the response based on context — is kept the same, but the database visitor tracking and login system are replaced with a signed Flask session cookie. That means no database setup and no admin login needed to run the prototype.
+
+
+
 ## What is this?
 
 Due to the increased useage of QR codes due to the ongoing pandemic, I was curious about how many people were scanning random QR codes.

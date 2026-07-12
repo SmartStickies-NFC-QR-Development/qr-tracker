@@ -1,10 +1,3 @@
-"""
-SmartStickies - Golden Ticket prototype (cookie-based)
-Based on haicenhacks/qr-tracker: kept its scan-a-URL-and-branch-the-response
-concept, replaced its database visitor tracking with a signed-cookie session
-so the prototype needs no database and no login.
-"""
-
 from flask import Flask, render_template, session, redirect, url_for
 import uuid
 
@@ -13,10 +6,10 @@ app.secret_key = "change-this-to-a-long-random-string-before-deploy"
 
 PRODUCTS = {
     "A17": {"name": "Single-Origin Coffee Beans", "price": "$12.00", "golden": True},
-    "B02": {"name": "Oat Milk, 1L",                "price": "$4.50",  "golden": False},
-    "C04": {"name": "Dark Chocolate Bar",          "price": "$6.00",  "golden": True},
-    "D09": {"name": "Sparkling Water, 6-pack",     "price": "$5.25",  "golden": False},
-    "F22": {"name": "Aged Cheddar Wedge",          "price": "$9.75",  "golden": True},
+    "B02": {"name": "Oat Milk, 1L", "price": "$4.50", "golden": False},
+    "C04": {"name": "Dark Chocolate Bar", "price": "$6.00", "golden": True},
+    "D09": {"name": "Sparkling Water, 6-pack", "price": "$5.25", "golden": False},
+    "F22": {"name": "Aged Cheddar Wedge", "price": "$9.75", "golden": True},
 }
 
 
