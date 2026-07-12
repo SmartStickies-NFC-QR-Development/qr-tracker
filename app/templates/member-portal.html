@@ -204,6 +204,9 @@
                     sub.textContent = "Log in to access your rewards.";
                     btn.textContent = "Log In";
 
+                    document.getElementById('fg-fullname').style.display = "none";
+                    document.getElementById('fg-confirm').style.display = "none";
+
                     row1Text.textContent = "Don't have an account?";
                     row1Link.textContent = "Sign up";
                     row1Link.onclick = function(){ switchMode("register"); };
@@ -251,10 +254,12 @@
                     return;
                 }
 
-                if(!fullName){ setStatus('Please enter your first name.', 'error'); return; }
                 if(!username){ setStatus('Please enter your username.', 'error'); return; }
                 if(!password || password.length < 6){ setStatus('Password must be at least 6 characters.', 'error'); return; }
-                if(!confirmPassword || password !== confirmPassword){ setStatus('Passwords do not match.', 'error'); return; }
+                if(mode === "register"){
+                    if(!fullName){ setStatus('Please enter your first name.', 'error'); return; }
+                    if(!confirmPassword || password !== confirmPassword){ setStatus('Passwords do not match.', 'error'); return; }
+                }
                 const email = usernameToEmail(username);
                 btn.disabled = true;
                 setStatus('Please wait...', '');
