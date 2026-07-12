@@ -40,7 +40,7 @@
   <div class="container">
     <div class="header">
       <h1>Your Golden Tickets</h1>
-      <p>Rewards you've claimed and can use at checkout.</p>
+      <p>{{ member_name }}'s rewards — ready for checkout.</p>
     </div>
 
     <div class="tickets-list">
@@ -72,6 +72,7 @@
     <div class="cta-section">
       <a href="/" class="cta-link">Tap More Items</a>
       <a href="/reset" class="reset-link">Clear & Start Over</a>
+      <a href="{{ url_for('logout') }}" class="reset-link">Sign Out</a>
     </div>
   </div>
 </body>

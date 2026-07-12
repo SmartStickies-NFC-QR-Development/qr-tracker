@@ -5,12 +5,15 @@ concept, replaced its database visitor tracking with a signed-cookie session
 so the prototype needs no database and no login.
 """
 
-from flask import Flask, render_template, session, redirect, url_for
+from flask import Flask, render_template, session, redirect, url_for, request
 from datetime import datetime
 import uuid
 
 app = Flask(__name__)
 app.secret_key = "change-this-to-a-long-random-string-before-deploy"
+
+# In-memory member storage (for prototype; move to DB in production)
+MEMBERS = {}
 
 PRODUCTS = {
     "A17": {"name": "Single-Origin Coffee Beans", "price": "$12.00", "golden": True},
@@ -28,6 +31,74 @@ def get_shopper():
         session["tickets"] = []  # member's collection of golden tickets
         session["cart"] = []     # member's shopping cart
     return session["shopper_id"]
+
+
+def is_logged_in():
+    """Check if a member is logged in."""
+    return "member_email" in session and session["member_email"] in MEMBERS
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """Member registration page."""
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not name or not email or not password:
+            return render_template("register.html", error="All fields are required.",
+                                   name=name, email=email)
+        if password != confirm_password:
+            return render_template("register.html", error="Passwords do not match.",
+                                   name=name, email=email)
+        if len(password) < 6:
+            return render_template("register.html", error="Password must be at least 6 characters.",
+                                   name=name, email=email)
+        if email in MEMBERS:
+            return render_template("register.html", error="Email already registered. Sign in instead.",
+                                   name=name, email=email)
+
+        MEMBERS[email] = {
+            "name": name,
+            "email": email,
+            "password": password,  # In production: hash this
+            "created_at": datetime.now().isoformat(),
+        }
+        session["member_email"] = email
+        session["member_name"] = name
+        return redirect(url_for("portal"))
+
+    return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Member login page."""
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        if not email or not password:
+            return render_template("login.html", error="Email and password are required.", email=email)
+
+        member = MEMBERS.get(email)
+        if not member or member["password"] != password:
+            return render_template("login.html", error="Invalid email or password.", email=email)
+
+        session["member_email"] = email
+        session["member_name"] = member["name"]
+        return redirect(url_for("portal"))
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.pop("member_email", None)
+    session.pop("member_name", None)
+    return redirect(url_for("index"))
 
 
 def add_ticket_to_collection(tag_id, product, coupon):
@@ -89,10 +160,12 @@ def reset():
 @app.route("/portal")
 def portal():
     """Member Portal: display all golden tickets claimed by this shopper."""
+    if not is_logged_in():
+        return redirect(url_for("register"))
     get_shopper()
     tickets = session.get("tickets", [])
-    shopper_id = session.get("shopper_id")
-    return render_template("portal.html", tickets=tickets, shopper_id=shopper_id)
+    member_name = session.get("member_name", "Member")
+    return render_template("portal.html", tickets=tickets, member_name=member_name)
 
 
 @app.route("/ticket/<ticket_index>")
