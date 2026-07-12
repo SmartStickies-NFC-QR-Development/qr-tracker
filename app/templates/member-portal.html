@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> Login | Virtual Golden Ticket - SmartStickies</title>
+        <style>
+            :root{
+                --blue:#1A56FF;
+                --sky:#38BFFF;
+                --muted:#7A8CB0;
+                --green:#0FD48C;
+                --trans:.25s cubic-bezier(.4,0,.2,1);
+                --r3:50px;
+            }
+            *{box-sizing:border-box}
+            body{margin:0;font-family:'Plus Jakarta Sans',sans-serif;}
+            #reg-modal{
+                position:fixed;inset:0;z-index:900;
+                display:flex;align-items:center;justify-content:center;
+                padding:20px;
+                background:rgba(5,14,43,.75);
+                backdrop-filter:blur(14px);
+            }
+            #reg-modal.hidden{display:none}
+            .modal-card{
+                background:#fff;border-radius:28px;
+                width:100%;max-width:400px;
+                padding:24px 24px;
+                box-shadow:0 30px 80px rgba(0,0,0,.35);
+                animation:modalIn .4s cubic-bezier(.34,1.3,.64,1) both;
+                max-height:95vh;
+                overflow-y: auto;
+            }
+            @keyframes modalIn{from{opacity:0;transform:scale(.85) translateY(24px)}to{opacity:1;transform:scale(1) translateY(0)}}
+            .modal-logo{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+            .modal-logo .mlb{
+                width:40px;height:40px;border-radius:12px;
+                background:linear-gradient(135deg,var(--blue),var(--sky));
+                display:flex;align-items:center;justify-content:center;flex-shrink:0;
+            }
+            .modal-logo .mlb svg{width:22px;height:22px;fill:#fff}
+            .modal-logo .mln{font-family:'Figtree',sans-serif;font-weight:900;font-size:1.1rem;color:#0D1B3E;letter-spacing:-.3px}
+            .modal-title{font-family:'Figtree',sans-serif;font-size:1.35rem;font-weight:900;color:#0D1B3E;letter-spacing:-.4px;margin-bottom:4px}
+            .modal-sub{font-size:.82rem;color:var(--muted);line-height:1.55;margin-bottom:16px}
+            .fg{margin-bottom:10px}
+            .fg label{display:block;font-size:.77rem;font-weight:700;color:#2D3E6B;margin-bottom:6px;letter-spacing:.2px}
+            .fg input{
+                width:100%;padding:9px 12px;
+                border:1.5px solid #DCE8FF;border-radius:12px;
+                font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;color:#0D1B3E;
+                background:#F7FAFF;outline:none;transition:border-color var(--trans),background var(--trans);
+                appearance:none;-webkit-appearance:none;
+            }
+            .fg input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,86,255,.12)}
+            .modal-submit{
+                width:100%;padding:14px;border:none;border-radius:var(--r3);
+                background:linear-gradient(135deg,var(--blue),#2d70ff);
+                color:#fff;font-family:'Figtree',sans-serif;font-size:1rem;font-weight:800;
+                cursor:pointer;transition:all var(--trans);
+                box-shadow:0 6px 22px rgba(26,86,255,.35);margin-top:6px;
+                letter-spacing:-.2px;
+            }
+            .modal-submit:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(26,86,255,.45)}
+            .modal-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+            .modal-secure{
+                display:flex;align-items:center;justify-content:center;gap:5px;
+                font-size:.7rem;color:var(--muted);margin-top:12px;
+            }
+            .modal-secure svg{width:12px;height:12px;fill:var(--green)}
+            #status-msg{
+                text-align:center;font-size:.8rem;margin-top:10px;min-height:18px;
+            }
+            #status-msg.error{color:#E23744}
+            #status-msg.success{color:var(--green)}
+            .toggle-mode{
+                text-align:center;font-size:.8rem;color:var(--muted);margin-top:16px;
+            }
+            .toggle-mode a{color:var(--blue);font-weight:700;text-decoration:none;cursor:pointer}
+            #domain {
+                width: 250px;
+                height: 36px;
+                margin-top: 4px;
+                font-size: 14px;
+                font-family:'Plus Jakarta Sans',sans-serif;
+                padding: 5px;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div id="reg-modal">
+            <div class="modal-card" id="modal-card">
+                <div class="modal-logo">
+                    <div class="mlb"><svg viewBox="0 0 24 24" fill="white"><path d="M1 1l22 4-4 10H6l-1 3h16v2H5l1.5-4.5L4 5H1zm5.5 16a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm11 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/></svg></div>
+                    <span class="mln">SmartStickies Rewards</span>
+                </div>
+                <div class="modal-title" id="form-title">Create Free Account</div>
+                <div class="modal-sub" id="form-sub">Register once to receive rewards. Your data is used only to store purchases.</div>
+                <div class="fg" id="fg-fullname">
+                    <label>Full Name</label>
+                    <input type="full-name" id="inp-full-name" placeholder="Full Name" autocomplete="full-name"/>
+                </div>
+                <div class="fg">
+                    <label>Email address</label>
+                    <input type="text" id="inp-username" placeholder="Username" autocomplete="username"/>
+                    <select name="domain" id="domain">
+                        <option value="gmail.com">@gmail.com</option>
+                        <option value="yahoo.com">@yahoo.com</option>
+                        <option value="hotmail.com">@hotmail.com</option>
+                        <option value="outlook.com">@outlook.com</option>
+                        <option value="aol.com">@aol.com</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Password</label>
+                    <input type="password" id="inp-password" placeholder="Password" autocomplete="new-password"/>
+                </div>
+                <div class="fg" id="fg-confirm">
+                    <label>Confirm Password</label>
+                    <input type="password" id="inp-confirm-password" placeholder="Confirm" autocomplete="new-password"/>
+                </div>
+                <button class="modal-submit" id="submit-btn" onclick="handleSubmit()">
+                    Start Redeeming
+                </button>
+                <div id="status-msg"></div>
+                <div class="toggle-mode">
+                    <span id="row1-text"></span>
+                    <a id="row1-link" onclick=""></a>
+                </div>
+                <div class="toggle-mode">
+                    <span id="row2-text"></span>
+                    <a id="row2-link" onclick=""></a>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+            import {
+                getAuth,
+                createUserWithEmailAndPassword,
+                signInWithEmailAndPassword
+            } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyDpMEPdVbJujvYTQ5CLvRWNUtyavYbSUfc",
+                authDomain: "backend-virtual-golden-t-8bd4a.firebaseapp.com",
+                projectId: "backend-virtual-golden-t-8bd4a",
+                storageBucket: "backend-virtual-golden-t-8bd4a.firebasestorage.app",
+                messagingSenderId: "563775045869",
+                appId: "1:563775045869:web:c876bf3ca3cd7c04eb8ce4"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+
+            let mode = "register";
+            var adminUsername = "goldenboy_admin";
+            var adminPassword = "Ar1ckS0oIsTheB3st!";
+
+            function usernameToEmail(username){
+                const fixedUsername = username.trim().toLowerCase().replace(/[^a-z0-9.-_+]/g, '')
+                const domain = document.getElementById('domain').value;
+                return fixedUsername + '@' + domain;
+            }
+
+            function setStatus(msg, type){
+                const el = document.getElementById('status-msg');
+                el.textContent = msg;
+                el.className = type || '';
+            }
+
+            window.switchMode = function(newMode){
+                mode = newMode;
+                setStatus('', '');
+
+                const title = document.getElementById('form-title');
+                const sub = document.getElementById('form-sub');
+                const btn = document.getElementById('submit-btn');
+                const row1Text = document.getElementById('row1-text');
+                const row1Link = document.getElementById('row1-link');
+                const row2Text = document.getElementById('row2-text');
+                const row2Link = document.getElementById('row2-link');
+
+                document.getElementById('fg-fullname').style.display = "";
+                document.getElementById('fg-confirm').style.display = "";
+                document.getElementById('domain').style.display = "";
+                document.getElementById('modal-card').classList.remove('admin-mode');
+
+                if(mode === "register"){
+                    title.textContent = "Create Free Account";
+                    sub.textContent = "Register once to receive rewards. Your data is used only to store purchases.";
+                    btn.textContent = "Start Redeeming";
+
+                    row1Text.textContent = "Already have an account?";
+                    row1Link.textContent = "Log in";
+                    row1Link.onclick = function(){ switchMode("login"); };
+
+                    row2Text.textContent = "Already an admin?";
+                    row2Link.textContent = "Admin login";
+                    row2Link.onclick = function(){ switchMode("admin"); };
+
+                } else if(mode === "login"){
+                    title.textContent = "Welcome Back";
+                    sub.textContent = "Log in to access your rewards.";
+                    btn.textContent = "Log In";
+
+                    row1Text.textContent = "Don't have an account?";
+                    row1Link.textContent = "Sign up";
+                    row1Link.onclick = function(){ switchMode("register"); };
+
+                    row2Text.textContent = "Already an admin?";
+                    row2Link.textContent = "Admin login";
+                    row2Link.onclick = function(){ switchMode("admin"); };
+
+                } else if(mode === "admin"){
+                    title.textContent = "Admin Login";
+                    sub.textContent = "Log in to manage your system.";
+                    btn.textContent = "Log In";
+
+                    document.getElementById('fg-fullname').style.display = "none";
+                    document.getElementById('fg-confirm').style.display = "none";
+                    document.getElementById('domain').style.display = "none";
+                    document.getElementById('modal-card').classList.add('admin-mode');
+
+                    row1Text.textContent = "Don't have an account?";
+                    row1Link.textContent = "Sign up";
+                    row1Link.onclick = function(){ switchMode("register"); };
+
+                    row2Text.textContent = "Already have an account?";
+                    row2Link.textContent = "Log in";
+                    row2Link.onclick = function(){ switchMode("login"); };
+                }
+            }
+
+            window.handleSubmit = async function(){
+                const fullName = document.getElementById('inp-full-name').value;
+                const username = document.getElementById('inp-username').value.trim();
+                const password = document.getElementById('inp-password').value;
+                const confirmPassword = document.getElementById('inp-confirm-password').value;
+                const btn = document.getElementById('submit-btn');
+
+                if(mode === "admin"){
+                    if(username === adminUsername && password === adminPassword){
+                        localStorage.setItem('sm_is-admin', 'true');
+                        setStatus('Welcome, admin! Redirecting...', 'success');
+                        await completeLogin('Admin', adminUsername + '@smartstickies.local');
+                        window.location.href = '/portal';
+                    } else {
+                        setStatus('Incorrect admin credentials', 'error');
+                    }
+                    return;
+                }
+
+                if(!fullName){ setStatus('Please enter your first name.', 'error'); return; }
+                if(!username){ setStatus('Please enter your username.', 'error'); return; }
+                if(!password || password.length < 6){ setStatus('Password must be at least 6 characters.', 'error'); return; }
+                if(!confirmPassword || password !== confirmPassword){ setStatus('Passwords do not match.', 'error'); return; }
+                const email = usernameToEmail(username);
+                btn.disabled = true;
+                setStatus('Please wait...', '');
+
+                try {
+                    if(mode === "register"){
+                        await createUserWithEmailAndPassword(auth, email, password);
+                        setStatus('Account created! Redirecting...', 'success');
+                    } else {
+                        await signInWithEmailAndPassword(auth, email, password);
+                        setStatus('Logged in! Redirecting...', 'success');
+                    }
+                    const firstName = fullName.split(' ')[0];
+                    localStorage.setItem('sm_first-name', firstName);
+                    await completeLogin(firstName, email);
+                    window.location.href = '/portal';
+                } catch (err) {
+                    setStatus(friendlyError(err.code), 'error');
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+
+            // Hand the Firebase-authenticated user off to the Flask session
+            // so the portal, cart, and tickets know who is logged in.
+            async function completeLogin(name, email){
+                await fetch('/auth/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, email: email })
+                });
+            }
+
+            function friendlyError(code){
+                switch(code){
+                    case 'auth/email-already-in-use': return 'That email is already taken.';
+                    case 'auth/invalid-email': return 'That email is not valid.';
+                    case 'auth/weak-password': return 'Password is too weak (min 6 characters).';
+                    case 'auth/user-not-found': return 'No account found with that username.';
+                    case 'auth/wrong-password': return 'Incorrect password.';
+                    case 'auth/invalid-credential': return 'Incorrect username or password.';
+                    case 'auth/too-many-requests': return 'Too many attempts. Try again later.';
+                    case 'auth/confirmed-password-mismatch': return 'Passwords do not match.';
+                    default: return 'Something went wrong. Please try again.';
+                }
+            }
+
+            switchMode("register");
+        </script>
+    </body>
+</html>

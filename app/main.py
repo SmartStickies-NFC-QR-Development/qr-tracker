@@ -1,9 +1,12 @@
-from flask import Flask, render_template, session, redirect, url_for, request
+from flask import Flask, render_template, session, redirect, url_for, request, jsonify
 from datetime import datetime
 import uuid
 
 app = Flask(__name__)
 app.secret_key = "change-this-to-a-long-random-string-before-deploy"
+
+# Pages a visitor can reach before logging in.
+PUBLIC_ENDPOINTS = {"login", "register", "auth_complete", "logout", "static"}
 
 PRODUCTS = {
     "A17": {"name": "Single-Origin Coffee Beans", "price": "$12.00", "golden": True},
@@ -26,53 +29,47 @@ def is_logged_in():
     return "member_name" in session
 
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        confirm_password = request.form.get("confirm_password", "")
-
-        if not name or not email or not password:
-            return render_template("register.html", error="All fields are required.",
-                                   name=name, email=email)
-        if password != confirm_password:
-            return render_template("register.html", error="Passwords do not match.",
-                                   name=name, email=email)
-        if len(password) < 6:
-            return render_template("register.html", error="Password must be at least 6 characters.",
-                                   name=name, email=email)
-
-        session["member_email"] = email
-        session["member_name"] = name
-        return redirect(url_for("portal"))
-
-    return render_template("register.html")
+@app.before_request
+def require_login():
+    if request.endpoint in PUBLIC_ENDPOINTS:
+        return
+    if not is_logged_in():
+        return redirect(url_for("login"))
 
 
-@app.route("/login", methods=["GET", "POST"])
+# Login and register share one Firebase-backed page (member-portal.html),
+# which switches between modes client-side.
+@app.route("/login")
 def login():
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
+    return render_template("member-portal.html")
 
-        if not email or not password:
-            return render_template("login.html", error="Email and password are required.", email=email)
 
-        session["member_email"] = email
-        if "member_name" not in session:
-            session["member_name"] = email.split("@")[0]
-        return redirect(url_for("portal"))
+@app.route("/register")
+def register():
+    return render_template("member-portal.html")
 
-    return render_template("login.html")
+
+@app.route("/auth/complete", methods=["POST"])
+def auth_complete():
+    """Bridge: Firebase authenticates the user in the browser, then posts the
+    name/email here so the Flask session knows who is logged in."""
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    if not name:
+        name = email.split("@")[0] if email else "Member"
+
+    get_shopper()
+    session["member_email"] = email
+    session["member_name"] = name
+    return jsonify({"ok": True})
 
 
 @app.route("/logout")
 def logout():
     session.pop("member_email", None)
     session.pop("member_name", None)
-    return redirect(url_for("index"))
+    return redirect(url_for("login"))
 
 
 def add_ticket_to_collection(tag_id, product, coupon):
