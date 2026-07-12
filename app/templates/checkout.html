@@ -45,57 +45,28 @@
       <p>Review your order before completing purchase</p>
     </div>
 
-    <div class="checkout-grid">
-      <div class="section">
-        <div class="section-title">Order Items</div>
-        {% if cart_items %}
-          <div class="order-items">
-            {% for item in cart_items %}
-              <div class="order-item">
-                <span class="order-item-name">{{ item.name }}</span>
-                <span class="order-item-price">{{ item.price }}</span>
-              </div>
-            {% endfor %}
-          </div>
-          <div class="divider"></div>
-          <div class="total-row">
-            <span>Subtotal:</span>
-            <span>{{ cart_total }}</span>
-          </div>
-        {% else %}
-          <p style="font-size:13px;color:var(--muted);">No items in order.</p>
-        {% endif %}
-      </div>
-
-      <div class="section">
-        <div class="section-title">Golden Tickets</div>
-        {% if tickets %}
-          <div class="coupons-list">
-            {% for ticket in tickets %}
-              <div class="coupon-card">
-                <div class="coupon-code">{{ ticket.coupon }}</div>
-                <div class="coupon-product">{{ ticket.product_name }}</div>
-              </div>
-            {% endfor %}
-          </div>
-          <p style="font-size:11px;color:#2a1f00;opacity:0.8;margin-top:8px;">Present these codes at the register to apply your discounts.</p>
-        {% else %}
-          <p class="empty-coupons">No golden tickets to apply.</p>
-        {% endif %}
-      </div>
+    <div class="section">
+      <div class="section-title">Order Items</div>
+      {% if cart_items %}
+        <div class="order-items">
+          {% for item in cart_items %}
+            <div class="order-item">
+              <span class="order-item-name">{{ item.name }}</span>
+              <span class="order-item-price">{{ item.price }}</span>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="divider"></div>
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>{{ cart_total }}</span>
+        </div>
+      {% else %}
+        <p style="font-size:13px;color:var(--muted);">No items in order.</p>
+      {% endif %}
     </div>
 
     <div class="order-summary">
-      <div class="summary-row">
-        <span>Subtotal:</span>
-        <span>{{ cart_total }}</span>
-      </div>
-      {% if tickets %}
-        <div class="summary-row">
-          <span>Golden Tickets Applied:</span>
-          <span style="color:var(--gold);">{{ tickets|length }}</span>
-        </div>
-      {% endif %}
       <div class="summary-row total">
         <span>Total:</span>
         <span>{{ cart_total }}</span>
@@ -104,7 +75,11 @@
 
     <div class="actions">
       <a href="{{ url_for('view_cart') }}" class="btn btn-back">← Back to Cart</a>
-      <button class="btn btn-complete" onclick="alert('Order placed! Use your golden tickets at the register.')">Complete Purchase</button>
+      {% if cart_items %}
+        <form method="POST" action="{{ url_for('pay') }}" style="flex:1;display:flex;">
+          <button type="submit" class="btn btn-complete" style="flex:1;">Complete Purchase</button>
+        </form>
+      {% endif %}
     </div>
   </div>
 </body>

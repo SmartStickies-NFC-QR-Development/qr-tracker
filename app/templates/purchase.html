@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Complete</title>
+  <style>
+    :root{--ink:#1a1a1a;--paper:#faf8f4;--line:#e4ded2;--muted:#7a7468;--gold:#c79a2e;--gold-deep:#9a7411;--gold-glow:#f3d985;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;line-height:1.5;}
+    .card{width:100%;max-width:440px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:32px 28px;box-shadow:0 12px 40px rgba(0,0,0,0.06);}
+    .check{width:52px;height:52px;border-radius:50%;background:#e8f5e9;color:#2e7d32;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;}
+    .title{font-size:24px;font-weight:800;text-align:center;margin-bottom:4px;}
+    .sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:24px;}
+    .order-item{display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid var(--line);}
+    .total-row{display:flex;justify-content:space-between;font-weight:700;font-size:16px;padding-top:12px;}
+    .eyebrow{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+    .ticket{position:relative;background:linear-gradient(135deg,var(--gold-glow),var(--gold) 55%,var(--gold-deep));border-radius:14px;padding:22px 20px;color:#2a1f00;margin:12px 0;overflow:hidden;animation:pop 0.4s ease-out;}
+    .ticket::after{content:"";position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:rgba(255,255,255,0.35);transform:rotate(20deg);animation:shine 2.2s ease-in-out infinite;}
+    .ticket-label{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;opacity:0.85;}
+    .ticket-title{font-size:22px;font-weight:800;margin:6px 0 2px;}
+    .ticket-product{font-size:13px;opacity:0.9;}
+    .coupon{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:18px;font-weight:700;letter-spacing:0.06em;background:rgba(255,255,255,0.55);border-radius:8px;padding:7px 11px;display:inline-block;margin-top:10px;}
+    .reveal-head{text-align:center;margin:26px 0 4px;}
+    .reveal-head .eyebrow{color:var(--gold-deep);}
+    .reveal-head h2{font-size:20px;font-weight:800;}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;}
+    .btn{flex:1;text-align:center;padding:12px 14px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;}
+    .btn-gold{background:var(--gold);color:#2a1f00;}
+    .btn-outline{background:#fff;color:var(--ink);border:1px solid var(--line);}
+    @keyframes pop{from{transform:scale(0.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+    @keyframes shine{0%{left:-30%;}60%{left:130%;}100%{left:130%;}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="check">&#10003;</div>
+    <div class="title">Thank you for your order!</div>
+    <div class="sub">Your payment was successful.</div>
+
+    <div class="eyebrow">Order summary</div>
+    {% for item in order_items %}
+      <div class="order-item">
+        <span>{{ item.name }}</span>
+        <span>{{ item.price }}</span>
+      </div>
+    {% endfor %}
+    <div class="total-row">
+      <span>Total paid</span>
+      <span>{{ order_total }}</span>
+    </div>
+
+    {% if won %}
+      <div class="reveal-head">
+        <div class="eyebrow">Surprise!</div>
+        <h2>{% if won|length == 1 %}You found a Golden Ticket!{% else %}You found {{ won|length }} Golden Tickets!{% endif %}</h2>
+      </div>
+      {% for ticket in won %}
+        <div class="ticket">
+          <div class="ticket-label">Golden Ticket</div>
+          <div class="ticket-title">You won!</div>
+          <div class="ticket-product">Hidden in your {{ ticket.product_name }}</div>
+          <div class="coupon">{{ ticket.coupon }}</div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="actions">
+      <a href="{{ url_for('index') }}" class="btn btn-gold">Continue shopping</a>
+      <a href="{{ url_for('portal') }}" class="btn btn-outline">My tickets</a>
+    </div>
+  </div>
+</body>
+</html>

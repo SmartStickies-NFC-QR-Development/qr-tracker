@@ -38,8 +38,7 @@
       <div class="eyebrow">SmartStickies Market</div>
       <div class="store-title">Shop the aisles</div>
       <div class="subtle">
-        {% if won %}You have already claimed your golden ticket. Use /reset to test again.
-        {% else %}Tap any item to view it. Some hide a golden ticket.{% endif %}
+        Add items to your cart and check out — a lucky purchase might hide a golden ticket.
       </div>
       <div class="store-nav">
         <a class="primary" href="{{ url_for('view_cart') }}">View cart</a>
@@ -56,14 +55,13 @@
         </div>
         <div class="grid">
           {% for tag_id, p in items %}
-            <a class="item {% if p.golden %}gold{% endif %}" href="{{ url_for('tag', tag_id=tag_id) }}">
+            <a class="item" href="{{ url_for('tag', tag_id=tag_id) }}">
               <div>
                 <div class="item-name">{{ p.name }}</div>
                 <div class="item-tag">Aisle tag {{ tag_id }}</div>
               </div>
               <div class="item-foot">
                 <span class="item-price">{{ p.price }}</span>
-                {% if p.golden %}<span class="gold-dot">GOLDEN</span>{% endif %}
               </div>
             </a>
           {% endfor %}

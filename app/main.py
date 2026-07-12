@@ -137,16 +137,8 @@ def tag(tag_id):
                                tag_id=None,
                                note="This tag is not registered in the store. Ask a team member.")
 
-    if product["golden"]:
-        existing_tags = [t["tag_id"] for t in session.get("tickets", [])]
-        if tag_id in existing_tags:
-            return render_template("product.html", product=product, tag_id=None,
-                                   note="You already obtained this ticket. Check your portal!")
-
-        coupon = "GOLD-" + session["shopper_id"][:6].upper()
-        add_ticket_to_collection(tag_id, product, coupon)
-        return render_template("reward.html", product=product, coupon=coupon)
-
+    # Golden status stays secret: every item looks like a normal product.
+    # A golden ticket is only revealed after the item is purchased at checkout.
     return render_template("product.html", product=product, tag_id=tag_id, note=None)
 
 
@@ -205,9 +197,11 @@ def add_to_cart(tag_id):
     get_shopper()
     product = PRODUCTS.get(tag_id)
 
-    if product is None or product["golden"]:
+    if product is None:
         return redirect(url_for("tag", tag_id=tag_id))
 
+    # Golden items are added to the cart like any other item — the shopper
+    # cannot tell a golden item from a normal one until they pay.
     if "cart" not in session:
         session["cart"] = []
 
@@ -240,10 +234,35 @@ def remove_from_cart(item_index):
 def checkout():
     get_shopper()
     cart = session.get("cart", [])
-    tickets = session.get("tickets", [])
     cart_total = sum(float(item["price"].replace("$", "")) for item in cart)
-    return render_template("checkout.html", cart_items=cart, tickets=tickets,
+    return render_template("checkout.html", cart_items=cart,
                            cart_total=f"${cart_total:.2f}")
+
+
+@app.route("/checkout/pay", methods=["POST"])
+def pay():
+    get_shopper()
+    cart = session.get("cart", [])
+    if not cart:
+        return redirect(url_for("view_cart"))
+
+    order_items = list(cart)
+    order_total = sum(float(item["price"].replace("$", "")) for item in cart)
+
+    # Reveal any secret golden tickets now that the shopper has paid.
+    won = []
+    for item in cart:
+        product = PRODUCTS.get(item["tag_id"])
+        if product and product.get("golden"):
+            coupon = f"GOLD-{item['tag_id']}-{session['shopper_id'][:4].upper()}"
+            add_ticket_to_collection(item["tag_id"], product, coupon)
+            won.append({"product_name": product["name"], "coupon": coupon})
+
+    session["cart"] = []
+    session.modified = True
+
+    return render_template("purchase.html", order_items=order_items,
+                           order_total=f"${order_total:.2f}", won=won)
 
 
 if __name__ == "__main__":
