@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // True only when the request comes from a signed-in user whose uid
+    // has a document in the `admins` collection.
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Product catalog: anyone may read (shoppers aren't logged in),
+    // but only an admin may change which items are golden tickets.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Admin list: a signed-in user may look up ONLY their own record.
+    // No one can grant themselves admin from the app — you add admins
+    // by hand in the Firebase console.
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}

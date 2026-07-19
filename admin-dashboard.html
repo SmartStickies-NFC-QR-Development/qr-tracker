@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Admin Dashboard | Virtual Golden Ticket - SmartStickies</title>
+    <style>
+        :root{
+            --blue:#1A56FF;
+            --sky:#38BFFF;
+            --muted:#7A8CB0;
+            --green:#0FD48C;
+            --gold:#F5B301;
+            --trans:.25s cubic-bezier(.4,0,.2,1);
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0;font-family:'Plus Jakarta Sans',sans-serif;
+            background:#F1F5FF;color:#0D1B3E;min-height:100vh;
+        }
+        header{
+            background:linear-gradient(135deg,var(--blue),var(--sky));
+            color:#fff;padding:22px 20px;
+            display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+        }
+        .brand{display:flex;align-items:center;gap:10px}
+        .brand .logo{
+            width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);
+            display:flex;align-items:center;justify-content:center;flex-shrink:0;
+        }
+        .brand .logo svg{width:24px;height:24px;fill:#fff}
+        .brand h1{font-family:'Figtree',sans-serif;font-size:1.2rem;font-weight:900;margin:0;letter-spacing:-.3px}
+        .brand p{margin:2px 0 0;font-size:.78rem;opacity:.85}
+        .logout{
+            color:#fff;text-decoration:none;font-size:.82rem;font-weight:700;
+            border:1.5px solid rgba(255,255,255,.5);padding:8px 14px;border-radius:40px;
+            transition:background var(--trans);
+        }
+        .logout:hover{background:rgba(255,255,255,.18)}
+        .wrap{max-width:760px;margin:0 auto;padding:24px 18px 60px}
+        .intro{
+            background:#fff;border-radius:18px;padding:18px 20px;margin-bottom:20px;
+            box-shadow:0 10px 30px rgba(13,27,62,.06);
+        }
+        .intro h2{font-family:'Figtree',sans-serif;font-size:1.05rem;margin:0 0 6px}
+        .intro p{margin:0;font-size:.85rem;color:var(--muted);line-height:1.55}
+        #msg{min-height:20px;text-align:center;font-size:.85rem;font-weight:700;margin:0 0 14px}
+        #msg.success{color:var(--green)}
+        #msg.error{color:#E23744}
+        .card{
+            background:#fff;border-radius:16px;padding:16px 18px;margin-bottom:12px;
+            display:flex;align-items:center;gap:14px;
+            box-shadow:0 6px 20px rgba(13,27,62,.05);
+            border:1.5px solid transparent;transition:border-color var(--trans);
+        }
+        .card.on{border-color:var(--gold);background:#FFFBEF}
+        .card .info{flex:1;min-width:0}
+        .card .tag{font-size:.68rem;font-weight:800;color:var(--muted);letter-spacing:.5px}
+        .card .name{font-family:'Figtree',sans-serif;font-weight:800;font-size:1rem;margin:2px 0}
+        .card .price{font-size:.85rem;color:var(--muted)}
+        .badge{
+            font-size:.66rem;font-weight:800;color:#916400;background:#FFE9A8;
+            padding:3px 9px;border-radius:30px;letter-spacing:.4px;
+            opacity:0;transition:opacity var(--trans);
+        }
+        .card.on .badge{opacity:1}
+        /* toggle */
+        .switch{position:relative;width:52px;height:30px;flex-shrink:0;cursor:pointer}
+        .switch input{opacity:0;width:0;height:0}
+        .slider{
+            position:absolute;inset:0;background:#CBD7EF;border-radius:30px;transition:background var(--trans);
+        }
+        .slider:before{
+            content:"";position:absolute;height:24px;width:24px;left:3px;top:3px;
+            background:#fff;border-radius:50%;transition:transform var(--trans);box-shadow:0 2px 6px rgba(0,0,0,.2);
+        }
+        .switch input:checked + .slider{background:var(--gold)}
+        .switch input:checked + .slider:before{transform:translateX(22px)}
+        .actions{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+        button{
+            font-family:'Figtree',sans-serif;font-weight:800;font-size:.95rem;cursor:pointer;
+            border:none;border-radius:40px;padding:14px 26px;transition:all var(--trans);
+        }
+        .btn-save{
+            background:linear-gradient(135deg,var(--blue),#2d70ff);color:#fff;
+            box-shadow:0 6px 22px rgba(26,86,255,.35);flex:1;min-width:180px;
+        }
+        .btn-save:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(26,86,255,.45)}
+        .btn-save:disabled{opacity:.6;cursor:not-allowed;transform:none}
+        .btn-ghost{background:#fff;color:var(--blue);border:1.5px solid #CBD7EF}
+        .btn-ghost:hover{background:#F7FAFF}
+        .empty{
+            text-align:center;background:#fff;border-radius:16px;padding:34px 20px;
+            box-shadow:0 6px 20px rgba(13,27,62,.05);
+        }
+        .empty p{color:var(--muted);font-size:.9rem;margin:0 0 18px}
+        .loading{text-align:center;color:var(--muted);padding:40px;font-size:.9rem}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="logo"><svg viewBox="0 0 24 24"><path d="M1 1l22 4-4 10H6l-1 3h16v2H5l1.5-4.5L4 5H1zm5.5 16a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm11 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/></svg></div>
+            <div>
+                <h1>Admin Dashboard</h1>
+                <p>Golden Ticket campaign control</p>
+            </div>
+        </div>
+        <a class="logout" href="member-portal.html" id="logout-link">Log out</a>
+    </header>
+
+    <div class="wrap">
+        <div class="intro">
+            <h2>🎟️ Golden Ticket products</h2>
+            <p>Flip a switch to make a product a winning golden-ticket item. When a shopper scans that product, they win. Turn it off and it becomes a normal item. Press <strong>Save changes</strong> when you're done — every shopper's device updates automatically.</p>
+        </div>
+
+        <div id="msg"></div>
+        <div id="list"><div class="loading">Loading products…</div></div>
+
+        <div class="actions" id="actions" style="display:none">
+            <button class="btn-save" id="save-btn" onclick="saveChanges()">Save changes</button>
+            <button class="btn-ghost" onclick="location.reload()">Discard &amp; reload</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import {
+            getFirestore, collection, getDocs, doc, getDoc, writeBatch
+        } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import {
+            getAuth, onAuthStateChanged, signOut
+        } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYtjjb3fbReIhWTD0WPJUUaQO-GKVwXkk",
+            authDomain: "smart-stickies-b3034.firebaseapp.com",
+            projectId: "smart-stickies-b3034",
+            storageBucket: "smart-stickies-b3034.firebasestorage.app",
+            messagingSenderId: "458444274779",
+            appId: "1:458444274779:web:877a52b817112c387bd37e",
+            measurementId: "G-0HFGTXJJFS"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Products the campaign starts with, used to seed an empty database.
+        const STARTER_PRODUCTS = {
+            A17: { name: "Single-Origin Coffee Beans", price: "$12.00", golden: true },
+            B02: { name: "Oat Milk, 1L", price: "$4.50", golden: false },
+            C04: { name: "Dark Chocolate Bar", price: "$6.00", golden: true },
+            D09: { name: "Sparkling Water, 6-pack", price: "$5.25", golden: false },
+            F22: { name: "Aged Cheddar Wedge", price: "$9.75", golden: true },
+        };
+
+        // --- Admin gate: require a signed-in Firebase user listed in `admins`. ---
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'member-portal.html'; return; }
+            try {
+                const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+                if (!adminDoc.exists()) { window.location.href = 'member-portal.html'; return; }
+            } catch (e) {
+                window.location.href = 'member-portal.html';
+                return;
+            }
+            // Verified admin — load the products.
+            loadProducts().catch(e => {
+                listEl.innerHTML = '';
+                setMsg('Could not connect to the database: ' + e.message, 'error');
+            });
+        });
+
+        document.getElementById('logout-link').onclick = async function (ev) {
+            ev.preventDefault();
+            await signOut(auth);
+            window.location.href = 'member-portal.html';
+        };
+
+        const listEl = document.getElementById('list');
+        const actionsEl = document.getElementById('actions');
+        const msgEl = document.getElementById('msg');
+
+        function setMsg(text, type) {
+            msgEl.textContent = text || '';
+            msgEl.className = type || '';
+        }
+
+        function productCard(id, p) {
+            return `
+                <div class="card ${p.golden ? 'on' : ''}" data-id="${id}">
+                    <div class="info">
+                        <div class="tag">TAG ${id}</div>
+                        <div class="name">${p.name}</div>
+                        <div class="price">${p.price}</div>
+                    </div>
+                    <span class="badge">GOLDEN</span>
+                    <label class="switch">
+                        <input type="checkbox" ${p.golden ? 'checked' : ''}/>
+                        <span class="slider"></span>
+                    </label>
+                </div>`;
+        }
+
+        async function loadProducts() {
+            setMsg('');
+            const snap = await getDocs(collection(db, 'products'));
+
+            if (snap.empty) {
+                listEl.innerHTML = `
+                    <div class="empty">
+                        <p>No products in the database yet.<br>Load your starter catalog to begin.</p>
+                        <button class="btn-save" id="seed-btn">Load starter products</button>
+                    </div>`;
+                actionsEl.style.display = 'none';
+                document.getElementById('seed-btn').onclick = seedProducts;
+                return;
+            }
+
+            const rows = [];
+            snap.forEach(d => rows.push([d.id, d.data()]));
+            rows.sort((a, b) => a[0].localeCompare(b[0]));
+
+            listEl.innerHTML = rows.map(([id, p]) => productCard(id, p)).join('');
+            actionsEl.style.display = 'flex';
+
+            // Toggle the highlight instantly when a switch flips.
+            listEl.querySelectorAll('.card').forEach(card => {
+                const input = card.querySelector('input');
+                input.addEventListener('change', () => card.classList.toggle('on', input.checked));
+            });
+        }
+
+        async function seedProducts() {
+            const btn = document.getElementById('seed-btn');
+            if (btn) btn.disabled = true;
+            setMsg('Loading starter products…');
+            try {
+                const batch = writeBatch(db);
+                for (const [id, p] of Object.entries(STARTER_PRODUCTS)) {
+                    batch.set(doc(db, 'products', id), p);
+                }
+                await batch.commit();
+                setMsg('Starter products loaded!', 'success');
+                await loadProducts();
+            } catch (e) {
+                setMsg('Could not load products: ' + e.message, 'error');
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        window.saveChanges = async function () {
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            setMsg('Saving…');
+            try {
+                const batch = writeBatch(db);
+                listEl.querySelectorAll('.card').forEach(card => {
+                    const id = card.dataset.id;
+                    const golden = card.querySelector('input').checked;
+                    // Only update the golden flag; leave name/price untouched.
+                    batch.set(doc(db, 'products', id), { golden }, { merge: true });
+                });
+                await batch.commit();
+                setMsg('Saved! Shoppers will see the update.', 'success');
+            } catch (e) {
+                setMsg('Save failed: ' + e.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        };
+
+    </script>
+</body>
+</html>
