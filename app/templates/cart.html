@@ -65,20 +65,6 @@
       {% endif %}
     </div>
 
-    {% if tickets %}
-      <div class="section">
-        <div class="section-title">Your Golden Tickets ({{ tickets|length }})</div>
-        <div class="tickets-preview">
-          {% for ticket in tickets %}
-            <div class="ticket-badge">
-              {{ ticket.coupon }} — {{ ticket.product_name }}
-            </div>
-          {% endfor %}
-        </div>
-        <p style="font-size:12px;color:var(--muted);margin-top:8px;">Apply these coupons at checkout to redeem your rewards.</p>
-      </div>
-    {% endif %}
-
     {% if cart_items %}
       <div class="summary">
         <div class="summary-row">
@@ -89,7 +75,6 @@
           <span>Total:</span>
           <span>{{ cart_total }}</span>
         </div>
-        <p style="font-size:12px;color:var(--muted);margin-top:12px;">Golden ticket coupons can be applied at checkout.</p>
       </div>
     {% endif %}
 

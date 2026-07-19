@@ -1,17 +1,53 @@
-from flask import Flask, render_template, session, redirect, url_for, request
+from flask import Flask, render_template, session, redirect, url_for, request, jsonify
 from datetime import datetime
 import uuid
 
 app = Flask(__name__)
 app.secret_key = "change-this-to-a-long-random-string-before-deploy"
 
+# Pages a visitor can reach before logging in.
+PUBLIC_ENDPOINTS = {"login", "register", "auth_complete", "logout", "static"}
+
 PRODUCTS = {
-    "A17": {"name": "Single-Origin Coffee Beans", "price": "$12.00", "golden": True},
-    "B02": {"name": "Oat Milk, 1L", "price": "$4.50", "golden": False},
-    "C04": {"name": "Dark Chocolate Bar", "price": "$6.00", "golden": True},
-    "D09": {"name": "Sparkling Water, 6-pack", "price": "$5.25", "golden": False},
-    "F22": {"name": "Aged Cheddar Wedge", "price": "$9.75", "golden": True},
+    # Produce
+    "P01": {"name": "Bananas, bunch", "price": "$1.80", "golden": False, "category": "Produce"},
+    "P02": {"name": "Gala Apples, 3 lb", "price": "$4.20", "golden": False, "category": "Produce"},
+    "P03": {"name": "Baby Spinach, 10 oz", "price": "$3.50", "golden": False, "category": "Produce"},
+    "P04": {"name": "Avocado", "price": "$1.25", "golden": True, "category": "Produce"},
+    # Bakery
+    "K01": {"name": "Sourdough Loaf", "price": "$4.75", "golden": False, "category": "Bakery"},
+    "K02": {"name": "Blueberry Muffins, 4-pack", "price": "$5.50", "golden": True, "category": "Bakery"},
+    "K03": {"name": "Everything Bagels, 6-pack", "price": "$4.00", "golden": False, "category": "Bakery"},
+    "K04": {"name": "Butter Croissant", "price": "$2.75", "golden": False, "category": "Bakery"},
+    # Dairy & Eggs
+    "D01": {"name": "Whole Milk, 1 gal", "price": "$3.90", "golden": False, "category": "Dairy & Eggs"},
+    "D02": {"name": "Large Eggs, dozen", "price": "$4.60", "golden": False, "category": "Dairy & Eggs"},
+    "D03": {"name": "Greek Yogurt, 32 oz", "price": "$5.25", "golden": False, "category": "Dairy & Eggs"},
+    "D04": {"name": "Aged Cheddar Wedge", "price": "$9.75", "golden": True, "category": "Dairy & Eggs"},
+    # Beverages
+    "B01": {"name": "Sparkling Water, 6-pack", "price": "$5.25", "golden": False, "category": "Beverages"},
+    "B02": {"name": "Cold Brew Coffee, 1L", "price": "$6.50", "golden": True, "category": "Beverages"},
+    "B03": {"name": "Orange Juice, 52 oz", "price": "$4.30", "golden": False, "category": "Beverages"},
+    "B04": {"name": "Green Tea, 20-pack", "price": "$3.75", "golden": False, "category": "Beverages"},
+    # Snacks
+    "S01": {"name": "Dark Chocolate Bar", "price": "$6.00", "golden": True, "category": "Snacks"},
+    "S02": {"name": "Kettle Potato Chips", "price": "$3.20", "golden": False, "category": "Snacks"},
+    "S03": {"name": "Trail Mix, 1 lb", "price": "$5.80", "golden": False, "category": "Snacks"},
+    "S04": {"name": "Sea Salt Pretzels", "price": "$2.90", "golden": False, "category": "Snacks"},
+    # Pantry
+    "A01": {"name": "Single-Origin Coffee Beans", "price": "$12.00", "golden": True, "category": "Pantry"},
+    "A02": {"name": "Extra-Virgin Olive Oil", "price": "$8.50", "golden": False, "category": "Pantry"},
+    "A03": {"name": "Penne Pasta, 1 lb", "price": "$1.95", "golden": False, "category": "Pantry"},
+    "A04": {"name": "Creamy Peanut Butter", "price": "$4.40", "golden": False, "category": "Pantry"},
 }
+
+
+def products_by_aisle():
+    """Group the catalog into aisles (categories) for the store page."""
+    aisles = {}
+    for tag_id, product in PRODUCTS.items():
+        aisles.setdefault(product["category"], []).append((tag_id, product))
+    return aisles
 
 
 def get_shopper():
@@ -26,53 +62,47 @@ def is_logged_in():
     return "member_name" in session
 
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        confirm_password = request.form.get("confirm_password", "")
-
-        if not name or not email or not password:
-            return render_template("register.html", error="All fields are required.",
-                                   name=name, email=email)
-        if password != confirm_password:
-            return render_template("register.html", error="Passwords do not match.",
-                                   name=name, email=email)
-        if len(password) < 6:
-            return render_template("register.html", error="Password must be at least 6 characters.",
-                                   name=name, email=email)
-
-        session["member_email"] = email
-        session["member_name"] = name
-        return redirect(url_for("portal"))
-
-    return render_template("register.html")
+@app.before_request
+def require_login():
+    if request.endpoint in PUBLIC_ENDPOINTS:
+        return
+    if not is_logged_in():
+        return redirect(url_for("login"))
 
 
-@app.route("/login", methods=["GET", "POST"])
+# Login and register share one Firebase-backed page (member-portal.html),
+# which switches between modes client-side.
+@app.route("/login")
 def login():
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
+    return render_template("member-portal.html")
 
-        if not email or not password:
-            return render_template("login.html", error="Email and password are required.", email=email)
 
-        session["member_email"] = email
-        if "member_name" not in session:
-            session["member_name"] = email.split("@")[0]
-        return redirect(url_for("portal"))
+@app.route("/register")
+def register():
+    return render_template("member-portal.html")
 
-    return render_template("login.html")
+
+@app.route("/auth/complete", methods=["POST"])
+def auth_complete():
+    """Bridge: Firebase authenticates the user in the browser, then posts the
+    name/email here so the Flask session knows who is logged in."""
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    if not name:
+        name = email.split("@")[0] if email else "Member"
+
+    get_shopper()
+    session["member_email"] = email
+    session["member_name"] = name
+    return jsonify({"ok": True})
 
 
 @app.route("/logout")
 def logout():
     session.pop("member_email", None)
     session.pop("member_name", None)
-    return redirect(url_for("index"))
+    return redirect(url_for("login"))
 
 
 def add_ticket_to_collection(tag_id, product, coupon):
@@ -92,7 +122,7 @@ def add_ticket_to_collection(tag_id, product, coupon):
 @app.route("/")
 def index():
     get_shopper()
-    return render_template("index.html", products=PRODUCTS,
+    return render_template("index.html", aisles=products_by_aisle(),
                            won=session.get("won", False))
 
 
@@ -107,16 +137,8 @@ def tag(tag_id):
                                tag_id=None,
                                note="This tag is not registered in the store. Ask a team member.")
 
-    if product["golden"]:
-        existing_tags = [t["tag_id"] for t in session.get("tickets", [])]
-        if tag_id in existing_tags:
-            return render_template("product.html", product=product, tag_id=None,
-                                   note="You already obtained this ticket. Check your portal!")
-
-        coupon = "GOLD-" + session["shopper_id"][:6].upper()
-        add_ticket_to_collection(tag_id, product, coupon)
-        return render_template("reward.html", product=product, coupon=coupon)
-
+    # Golden status stays secret: every item looks like a normal product.
+    # A golden ticket is only revealed after the item is purchased at checkout.
     return render_template("product.html", product=product, tag_id=tag_id, note=None)
 
 
@@ -175,9 +197,11 @@ def add_to_cart(tag_id):
     get_shopper()
     product = PRODUCTS.get(tag_id)
 
-    if product is None or product["golden"]:
+    if product is None:
         return redirect(url_for("tag", tag_id=tag_id))
 
+    # Golden items are added to the cart like any other item — the shopper
+    # cannot tell a golden item from a normal one until they pay.
     if "cart" not in session:
         session["cart"] = []
 
@@ -210,10 +234,35 @@ def remove_from_cart(item_index):
 def checkout():
     get_shopper()
     cart = session.get("cart", [])
-    tickets = session.get("tickets", [])
     cart_total = sum(float(item["price"].replace("$", "")) for item in cart)
-    return render_template("checkout.html", cart_items=cart, tickets=tickets,
+    return render_template("checkout.html", cart_items=cart,
                            cart_total=f"${cart_total:.2f}")
+
+
+@app.route("/checkout/pay", methods=["POST"])
+def pay():
+    get_shopper()
+    cart = session.get("cart", [])
+    if not cart:
+        return redirect(url_for("view_cart"))
+
+    order_items = list(cart)
+    order_total = sum(float(item["price"].replace("$", "")) for item in cart)
+
+    # Reveal any secret golden tickets now that the shopper has paid.
+    won = []
+    for item in cart:
+        product = PRODUCTS.get(item["tag_id"])
+        if product and product.get("golden"):
+            coupon = f"GOLD-{item['tag_id']}-{session['shopper_id'][:4].upper()}"
+            add_ticket_to_collection(item["tag_id"], product, coupon)
+            won.append({"product_name": product["name"], "coupon": coupon})
+
+    session["cart"] = []
+    session.modified = True
+
+    return render_template("purchase.html", order_items=order_items,
+                           order_total=f"${order_total:.2f}", won=won)
 
 
 if __name__ == "__main__":
