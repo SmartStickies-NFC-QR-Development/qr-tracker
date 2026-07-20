@@ -1,12 +1,23 @@
-from flask import Flask, render_template, session, redirect, url_for, request, jsonify
+from flask import Flask, render_template, session, redirect, url_for, request, jsonify, send_file
 from datetime import datetime
+import json
+import os
+import urllib.request
 import uuid
 
 app = Flask(__name__)
 app.secret_key = "change-this-to-a-long-random-string-before-deploy"
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# The admin dashboard configures golden tickets in this Firestore collection;
+# the store reads it back so the admin controls which items really win.
+FIRESTORE_PRODUCTS_URL = ("https://firestore.googleapis.com/v1/projects/"
+                          "smart-stickies-b3034/databases/(default)/documents/products")
+
 # Pages a visitor can reach before logging in.
-PUBLIC_ENDPOINTS = {"login", "register", "auth_complete", "logout", "static"}
+PUBLIC_ENDPOINTS = {"login", "register", "auth_complete", "logout",
+                    "admin_dashboard", "static"}
 
 PRODUCTS = {
     # Produce
@@ -42,12 +53,43 @@ PRODUCTS = {
 }
 
 
+def get_products():
+    """The catalog with golden flags overlaid from Firestore (what the admin
+    dashboard sets). Falls back to the built-in flags if Firestore is
+    unreachable, so the store keeps working either way."""
+    products = {tag: dict(p) for tag, p in PRODUCTS.items()}
+    try:
+        with urllib.request.urlopen(FIRESTORE_PRODUCTS_URL, timeout=3) as resp:
+            data = json.load(resp)
+        for doc in data.get("documents", []):
+            tag = doc["name"].rsplit("/", 1)[-1]
+            fields = doc.get("fields", {})
+            if tag in products and "golden" in fields:
+                products[tag]["golden"] = bool(fields["golden"].get("booleanValue", False))
+    except Exception:
+        pass
+    return products
+
+
 def products_by_aisle():
     """Group the catalog into aisles (categories) for the store page."""
     aisles = {}
     for tag_id, product in PRODUCTS.items():
         aisles.setdefault(product["category"], []).append((tag_id, product))
     return aisles
+
+
+def cart_total_value(cart):
+    """Sum a cart's line totals (unit price × quantity)."""
+    total = 0.0
+    for item in cart:
+        total += float(item["price"].replace("$", "")) * item.get("qty", 1)
+    return total
+
+
+def cart_unit_count(cart):
+    """Total number of individual units across the cart."""
+    return sum(item.get("qty", 1) for item in cart)
 
 
 def get_shopper():
@@ -103,6 +145,13 @@ def logout():
     session.pop("member_email", None)
     session.pop("member_name", None)
     return redirect(url_for("login"))
+
+
+# The admin dashboard is a static page; on Vercel it's served as a static file,
+# and this route serves the same file locally so it shares the Flask origin.
+@app.route("/admin-dashboard.html")
+def admin_dashboard():
+    return send_file(os.path.join(BASE_DIR, "admin-dashboard.html"))
 
 
 def add_ticket_to_collection(tag_id, product, coupon):
@@ -187,9 +236,9 @@ def view_cart():
     get_shopper()
     cart = session.get("cart", [])
     tickets = session.get("tickets", [])
-    cart_total = sum(float(item["price"].replace("$", "")) for item in cart)
+    cart_total = cart_total_value(cart)
     return render_template("cart.html", cart_items=cart, tickets=tickets,
-                           cart_total=f"${cart_total:.2f}", cart_count=len(cart))
+                           cart_total=f"${cart_total:.2f}", cart_count=cart_unit_count(cart))
 
 
 @app.route("/cart/add/<tag_id>")
@@ -200,22 +249,37 @@ def add_to_cart(tag_id):
     if product is None:
         return redirect(url_for("tag", tag_id=tag_id))
 
+    # How many of this item to add (default 1, clamped to a sensible range).
+    try:
+        qty = int(request.args.get("qty", 1))
+    except (TypeError, ValueError):
+        qty = 1
+    qty = max(1, min(qty, 99))
+
     # Golden items are added to the cart like any other item — the shopper
     # cannot tell a golden item from a normal one until they pay.
     if "cart" not in session:
         session["cart"] = []
 
-    cart_item = {
-        "tag_id": tag_id,
-        "name": product["name"],
-        "price": product["price"],
-        "added_at": datetime.now().isoformat(),
-    }
-    session["cart"].append(cart_item)
+    # If the item is already in the cart, bump its quantity instead of
+    # adding a duplicate line.
+    for item in session["cart"]:
+        if item["tag_id"] == tag_id:
+            item["qty"] = item.get("qty", 1) + qty
+            break
+    else:
+        session["cart"].append({
+            "tag_id": tag_id,
+            "name": product["name"],
+            "price": product["price"],
+            "qty": qty,
+            "added_at": datetime.now().isoformat(),
+        })
     session.modified = True
 
-    return render_template("product.html", product=product, tag_id=None,
-                           note=f"{product['name']} added to cart!")
+    note = (f"{qty} × {product['name']} added to cart!" if qty > 1
+            else f"{product['name']} added to cart!")
+    return render_template("product.html", product=product, tag_id=None, note=note)
 
 
 @app.route("/cart/remove/<int:item_index>")
@@ -234,7 +298,7 @@ def remove_from_cart(item_index):
 def checkout():
     get_shopper()
     cart = session.get("cart", [])
-    cart_total = sum(float(item["price"].replace("$", "")) for item in cart)
+    cart_total = cart_total_value(cart)
     return render_template("checkout.html", cart_items=cart,
                            cart_total=f"${cart_total:.2f}")
 
@@ -247,12 +311,14 @@ def pay():
         return redirect(url_for("view_cart"))
 
     order_items = list(cart)
-    order_total = sum(float(item["price"].replace("$", "")) for item in cart)
+    order_total = cart_total_value(cart)
 
     # Reveal any secret golden tickets now that the shopper has paid.
+    # Golden status comes from the admin-controlled Firestore config.
+    live_products = get_products()
     won = []
     for item in cart:
-        product = PRODUCTS.get(item["tag_id"])
+        product = live_products.get(item["tag_id"])
         if product and product.get("golden"):
             coupon = f"GOLD-{item['tag_id']}-{session['shopper_id'][:4].upper()}"
             add_ticket_to_collection(item["tag_id"], product, coupon)

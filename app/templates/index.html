@@ -45,10 +45,15 @@
         <a href="{{ url_for('portal') }}">My tickets</a>
         <a href="{{ url_for('logout') }}">Sign out</a>
       </div>
+      <div class="store-nav">
+        {% for aisle in aisles.keys() %}
+          <a href="#aisle-{{ loop.index }}">{{ aisle }}</a>
+        {% endfor %}
+      </div>
     </div>
 
     {% for aisle, items in aisles.items() %}
-      <section class="aisle">
+      <section class="aisle" id="aisle-{{ loop.index }}">
         <div class="aisle-head">
           <h2>{{ aisle }}</h2>
           <div class="rule"></div>

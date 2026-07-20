@@ -51,7 +51,7 @@
         <div class="order-items">
           {% for item in cart_items %}
             <div class="order-item">
-              <span class="order-item-name">{{ item.name }}</span>
+              <span class="order-item-name">{{ item.name }}{% if item.get('qty', 1) > 1 %} &times; {{ item.qty }}{% endif %}</span>
               <span class="order-item-price">{{ item.price }}</span>
             </div>
           {% endfor %}

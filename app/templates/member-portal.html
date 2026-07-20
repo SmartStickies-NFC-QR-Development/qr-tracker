@@ -138,24 +138,28 @@
             import {
                 getAuth,
                 createUserWithEmailAndPassword,
-                signInWithEmailAndPassword
+                signInWithEmailAndPassword,
+                signOut
             } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+            import {
+                getFirestore, doc, getDoc
+            } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
             const firebaseConfig = {
-                apiKey: "AIzaSyDpMEPdVbJujvYTQ5CLvRWNUtyavYbSUfc",
-                authDomain: "backend-virtual-golden-t-8bd4a.firebaseapp.com",
-                projectId: "backend-virtual-golden-t-8bd4a",
-                storageBucket: "backend-virtual-golden-t-8bd4a.firebasestorage.app",
-                messagingSenderId: "563775045869",
-                appId: "1:563775045869:web:c876bf3ca3cd7c04eb8ce4"
+                apiKey: "AIzaSyAYtjjb3fbReIhWTD0WPJUUaQO-GKVwXkk",
+                authDomain: "smart-stickies-b3034.firebaseapp.com",
+                projectId: "smart-stickies-b3034",
+                storageBucket: "smart-stickies-b3034.firebasestorage.app",
+                messagingSenderId: "458444274779",
+                appId: "1:458444274779:web:877a52b817112c387bd37e",
+                measurementId: "G-0HFGTXJJFS"
             };
 
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
+            const db = getFirestore(app);
 
             let mode = "register";
-            var adminUsername = "goldenboy_admin";
-            var adminPassword = "Ar1ckS0oIsTheB3st!";
 
             function usernameToEmail(username){
                 const fixedUsername = username.trim().toLowerCase().replace(/[^a-z0-9.-_+]/g, '')
@@ -222,7 +226,6 @@
 
                     document.getElementById('fg-fullname').style.display = "none";
                     document.getElementById('fg-confirm').style.display = "none";
-                    document.getElementById('domain').style.display = "none";
                     document.getElementById('modal-card').classList.add('admin-mode');
 
                     row1Text.textContent = "Don't have an account?";
@@ -243,13 +246,28 @@
                 const btn = document.getElementById('submit-btn');
 
                 if(mode === "admin"){
-                    if(username === adminUsername && password === adminPassword){
-                        localStorage.setItem('sm_is-admin', 'true');
-                        setStatus('Welcome, admin! Redirecting...', 'success');
-                        await completeLogin('Admin', adminUsername + '@smartstickies.local');
-                        window.location.href = '/portal';
-                    } else {
-                        setStatus('Incorrect admin credentials', 'error');
+                    if(!username){ setStatus('Please enter your admin email.', 'error'); return; }
+                    if(!password){ setStatus('Please enter your password.', 'error'); return; }
+                    const adminEmail = usernameToEmail(username);
+                    btn.disabled = true;
+                    setStatus('Please wait...', '');
+                    try {
+                        // Sign in like any user, then confirm this account is
+                        // listed in the Firestore `admins` collection.
+                        const cred = await signInWithEmailAndPassword(auth, adminEmail, password);
+                        const adminDoc = await getDoc(doc(db, 'admins', cred.user.uid));
+                        if (adminDoc.exists()) {
+                            setStatus('Welcome, admin! Redirecting...', 'success');
+                            await completeLogin('Admin', adminEmail);
+                            window.location.href = '/admin-dashboard.html';
+                        } else {
+                            await signOut(auth);
+                            setStatus('This account does not have admin access.', 'error');
+                        }
+                    } catch (err) {
+                        setStatus(friendlyError(err.code), 'error');
+                    } finally {
+                        btn.disabled = false;
                     }
                     return;
                 }

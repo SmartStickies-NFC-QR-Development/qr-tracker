@@ -50,7 +50,7 @@
             <div class="cart-item">
               <div class="item-info">
                 <h3>{{ item.name }}</h3>
-                <div class="item-price">{{ item.price }}</div>
+                <div class="item-price">{{ item.price }} &times; {{ item.get('qty', 1) }}</div>
               </div>
               <div class="item-actions">
                 <a href="{{ url_for('remove_from_cart', item_index=loop.index0) }}" class="remove-btn">Remove</a>

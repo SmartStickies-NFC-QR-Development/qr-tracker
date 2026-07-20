@@ -41,7 +41,7 @@
     <div class="eyebrow">Order summary</div>
     {% for item in order_items %}
       <div class="order-item">
-        <span>{{ item.name }}</span>
+        <span>{{ item.name }}{% if item.get('qty', 1) > 1 %} &times; {{ item.qty }}{% endif %}</span>
         <span>{{ item.price }}</span>
       </div>
     {% endfor %}
