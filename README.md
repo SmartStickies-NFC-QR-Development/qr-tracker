@@ -1,89 +1,80 @@
-# QR Tracker
+# SmartStickies — Virtual Golden Ticket
 
-## Golden Ticket version
+A grocery-store web app with a gamified rewards twist. Shoppers browse aisles,
+add items to a cart, and check out. Some products secretly carry a **golden
+ticket** that is revealed only *after* payment. An **admin dashboard** decides
+which products are golden — and the store honors those choices in real time.
 
-This fork adapts the original QR tracker into a cookie-based "Golden Ticket" prototype called SmartStickies. The core idea — scan a URL and branch the response based on context — is kept the same, but the database visitor tracking and login system are replaced with a signed Flask session cookie. That means no database setup and no admin login needed to run the prototype.
+> This started as a fork of a QR-tracker project and has since been rebuilt into
+> the SmartStickies golden-ticket store.
 
+## Features
 
+- 🛒 **Store flow** — aisles by category, product pages with quantity, cart, and checkout.
+- 🎟️ **Golden tickets stay secret** until the shopper pays; the receipt reveals any wins.
+- 🛠️ **Admin dashboard** — toggle which products are golden; changes are saved to Firebase.
+- 🔗 **Admin controls the real store** — the store reads golden flags from Firebase at
+  checkout, so what the admin sets is what shoppers actually win.
+- 🔐 **Firebase Authentication** for members, with a separate secure admin login
+  (admins are listed in a Firestore `admins` collection — no hardcoded passwords).
 
-## What is this?
+## Tech
 
-Due to the increased useage of QR codes due to the ongoing pandemic, I was curious about how many people were scanning random QR codes.
-Further, I saw this as an opportunity to create prank QR codes.
+- **Backend:** Flask (`app/main.py`), deployed on **Vercel** (`@vercel/python`).
+- **Data:** **Firebase Firestore** (`products` + `admins` collections).
+- **Auth:** **Firebase Authentication** (email/password).
+- **Frontend:** server-rendered Jinja templates + a static admin dashboard.
 
-# Who would use this?
+## Quick start
 
-This can be used to add some lighthearted fun, or to assess the security posture of your org (i.e. will employees scan random QR codes and then open the links)
+```bash
+cd qr-tracker
+python3.12 -m pip install -r requirements.txt
+python3.12 -c "from app.main import app; app.run(port=5001)"
+```
 
-# How it works
-The process flow is described below:
+Then open <http://localhost:5001>. Full instructions — including Firebase project
+setup and creating your admin account — are in **[SETUP.md](SETUP.md)**.
 
-![a flowchart image that describes what happens when the URL encoded on the QR code is opened](flow.png "flowchart")
+> **Note:** use Python 3.11/3.12 (not 3.14 on this machine — its `pip` is broken).
 
-The QR code contains only a link to the web app.
-The web app collects IP address and user agent strings from anyone who visits the link encoded on the QR code, and stores them in a database.
-Finally, the visitor is redirected either to a page explaining what this app does, or to the defined url.
+## How golden tickets flow
 
-# Admin interface
+```
+Admin dashboard  ──writes──►  Firestore `products` (golden: true/false)
+                                     │
+                                     ▼  read at checkout (get_products)
+Shopper buys item  ──►  Flask pay()  ──►  reveals Golden Ticket if golden
+```
 
-Log in after following the instructions in [Deployment](#Deployment)
+## Project layout
 
-## Creating a QR campaign
+```
+qr-tracker/
+├─ app/
+│  ├─ main.py                 # Flask store: routes, cart, checkout, golden overlay
+│  └─ templates/
+│     ├─ member-portal.html   # Login (member + secure admin login)
+│     ├─ index.html           # Store home (aisles)
+│     ├─ product.html         # Item page (quantity + add to cart)
+│     ├─ cart.html, checkout.html, purchase.html
+│     └─ portal.html, reward.html
+├─ admin-dashboard.html       # Admin: configure golden tickets (Firestore)
+├─ firestore.rules            # Firestore security rules (publish in Firebase console)
+├─ vercel.json                # Vercel build/routes
+├─ requirements.txt
+├─ SETUP.md                   # Full setup guide
+└─ README.md
+```
 
-A campaign is just a way to label where a QR code has been distributed.
-For example, while conducting an informal experiment, two locations have been identified, such as a bus stop and a bulletin board.
-Two separate campaigns would allow identification of which location the user was when scanning the code.
+## Security notes
 
+- Firestore should not be left in test mode — publish `firestore.rules`
+  (Firebase console → Firestore → Rules) so only admins can change products.
+- When deploying, add your Vercel domain to Firebase → Authentication →
+  **Authorized domains**, or logins will be blocked on the live site.
 
-![a screenshot showing the creation of a qr campaign](screenshots/create_qr_camp.png "The create qr page")
+## License
 
-Once created, the data collected can be viewed.
-![a screenshot showing the data colleced from a qr campaign](screenshots/camp_in_progress.png "Individual campaign page")
-
-All in progress campaigns are shown
-![a screenshot showing all qr campaigns](screenshots/list_campaigns.png "All qr campaigns")
-
-Finally, all visitors can be listed. The ability to export these is a planned feature, not yet implemented.
-
-
-All visitors
-![a screenshot showing all visitors](screenshots/all_visitors.png "All visitors")
-
-Anyone who has followed the link on the QR code is shown a message that explains what data is collected.
-
-
-# Deployment
-
-To deploy, simply clone the repository and create the following files:
-
-* .env
-  ```
-  FLASK_SECRET_KEY=<some really secure string>
-  URL_BASE=localhost:5002
-  ```
-* app/secrets.py
-  ```
-  users = {'admin': {'password': '<some really secure password>'}}
-  ```
-Lastly, run
-`docker-compose up --build`
-
-It is suggested that a reverse proxy be used to route a subdomain to the app and handle https certs.
-
-# Future work
-
-There are a few enhancements I'd like to make.
-
-1. fully implement the javascript fingerprinting. Right now, it is non-functional and really just a proof of concept (it prints the screen height/width in the terminal)
-
-# License
-
-I chose the MIT license for this project. My preference is that this not be used for evil. If you've found this useful and would like to contribute, you can buy me a coffee https://ko-fi.com/haicen
-
-# FAQ's
-
-* Is this malicious?
-  * No, but it could be used for phishing if instead of redirecting to rickroll or the stats page, it directed the victim to log in to "facebook"
-* Does this collect Personally Identifying Information (PII)?
-  * No, the only information collected is the user's IP address and user agent. This information is sent to any website you view.
-* How does it work
+MIT — see [LICENSE.txt](LICENSE.txt). Originally forked from a QR-tracker project
+by [haicen](https://ko-fi.com/haicen).
