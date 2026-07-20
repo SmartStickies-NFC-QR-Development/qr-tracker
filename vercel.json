@@ -6,7 +6,7 @@
   ],
   "routes": [
     { "src": "/static/(.*)", "dest": "/app/static/$1" },
-    { "src": "/(member-portal|admin-dashboard|inventory)\\.html", "dest": "/$1.html" },
+    { "src": "/admin-dashboard\\.html", "dest": "/admin-dashboard.html" },
     { "src": "/(.*)", "dest": "app/main.py" }
   ]
 }

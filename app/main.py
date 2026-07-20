@@ -1,12 +1,23 @@
-from flask import Flask, render_template, session, redirect, url_for, request, jsonify
+from flask import Flask, render_template, session, redirect, url_for, request, jsonify, send_file
 from datetime import datetime
+import json
+import os
+import urllib.request
 import uuid
 
 app = Flask(__name__)
 app.secret_key = "change-this-to-a-long-random-string-before-deploy"
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# The admin dashboard configures golden tickets in this Firestore collection;
+# the store reads it back so the admin controls which items really win.
+FIRESTORE_PRODUCTS_URL = ("https://firestore.googleapis.com/v1/projects/"
+                          "smart-stickies-b3034/databases/(default)/documents/products")
+
 # Pages a visitor can reach before logging in.
-PUBLIC_ENDPOINTS = {"login", "register", "auth_complete", "logout", "static"}
+PUBLIC_ENDPOINTS = {"login", "register", "auth_complete", "logout",
+                    "admin_dashboard", "static"}
 
 PRODUCTS = {
     # Produce
@@ -40,6 +51,24 @@ PRODUCTS = {
     "A03": {"name": "Penne Pasta, 1 lb", "price": "$1.95", "golden": False, "category": "Pantry"},
     "A04": {"name": "Creamy Peanut Butter", "price": "$4.40", "golden": False, "category": "Pantry"},
 }
+
+
+def get_products():
+    """The catalog with golden flags overlaid from Firestore (what the admin
+    dashboard sets). Falls back to the built-in flags if Firestore is
+    unreachable, so the store keeps working either way."""
+    products = {tag: dict(p) for tag, p in PRODUCTS.items()}
+    try:
+        with urllib.request.urlopen(FIRESTORE_PRODUCTS_URL, timeout=3) as resp:
+            data = json.load(resp)
+        for doc in data.get("documents", []):
+            tag = doc["name"].rsplit("/", 1)[-1]
+            fields = doc.get("fields", {})
+            if tag in products and "golden" in fields:
+                products[tag]["golden"] = bool(fields["golden"].get("booleanValue", False))
+    except Exception:
+        pass
+    return products
 
 
 def products_by_aisle():
@@ -116,6 +145,13 @@ def logout():
     session.pop("member_email", None)
     session.pop("member_name", None)
     return redirect(url_for("login"))
+
+
+# The admin dashboard is a static page; on Vercel it's served as a static file,
+# and this route serves the same file locally so it shares the Flask origin.
+@app.route("/admin-dashboard.html")
+def admin_dashboard():
+    return send_file(os.path.join(BASE_DIR, "admin-dashboard.html"))
 
 
 def add_ticket_to_collection(tag_id, product, coupon):
@@ -278,9 +314,11 @@ def pay():
     order_total = cart_total_value(cart)
 
     # Reveal any secret golden tickets now that the shopper has paid.
+    # Golden status comes from the admin-controlled Firestore config.
+    live_products = get_products()
     won = []
     for item in cart:
-        product = PRODUCTS.get(item["tag_id"])
+        product = live_products.get(item["tag_id"])
         if product and product.get("golden"):
             coupon = f"GOLD-{item['tag_id']}-{session['shopper_id'][:4].upper()}"
             add_ticket_to_collection(item["tag_id"], product, coupon)
