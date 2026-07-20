@@ -41,7 +41,12 @@
       <div class="note">Tap more items around the store. Some hide a golden ticket.</div>
     {% endif %}
     {% if tag_id and not note %}
-      <a href="{{ url_for('add_to_cart', tag_id=tag_id) }}" style="display:inline-block;margin-top:16px;padding:10px 16px;background:var(--gold);color:#2a1f00;text-decoration:none;border-radius:8px;font-weight:600;font-size:13px;">Add to Cart</a>
+      <form method="get" action="{{ url_for('add_to_cart', tag_id=tag_id) }}" style="display:flex;gap:10px;align-items:center;margin-top:16px;">
+        <label for="qty" style="font-size:13px;color:var(--muted);">Qty</label>
+        <input type="number" id="qty" name="qty" value="1" min="1" max="99"
+               style="width:70px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;">
+        <button type="submit" style="padding:10px 16px;background:var(--gold);color:#2a1f00;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">Add to Cart</button>
+      </form>
     {% endif %}
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);">
       <a href="{{ url_for('index') }}" style="font-size:13px;font-weight:600;text-decoration:none;color:#2a1f00;background:var(--gold);border-radius:8px;padding:9px 14px;">← Continue shopping</a>

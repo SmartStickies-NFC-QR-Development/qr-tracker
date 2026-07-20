@@ -50,6 +50,19 @@ def products_by_aisle():
     return aisles
 
 
+def cart_total_value(cart):
+    """Sum a cart's line totals (unit price × quantity)."""
+    total = 0.0
+    for item in cart:
+        total += float(item["price"].replace("$", "")) * item.get("qty", 1)
+    return total
+
+
+def cart_unit_count(cart):
+    """Total number of individual units across the cart."""
+    return sum(item.get("qty", 1) for item in cart)
+
+
 def get_shopper():
     if "shopper_id" not in session:
         session["shopper_id"] = str(uuid.uuid4())
@@ -187,9 +200,9 @@ def view_cart():
     get_shopper()
     cart = session.get("cart", [])
     tickets = session.get("tickets", [])
-    cart_total = sum(float(item["price"].replace("$", "")) for item in cart)
+    cart_total = cart_total_value(cart)
     return render_template("cart.html", cart_items=cart, tickets=tickets,
-                           cart_total=f"${cart_total:.2f}", cart_count=len(cart))
+                           cart_total=f"${cart_total:.2f}", cart_count=cart_unit_count(cart))
 
 
 @app.route("/cart/add/<tag_id>")
@@ -200,22 +213,37 @@ def add_to_cart(tag_id):
     if product is None:
         return redirect(url_for("tag", tag_id=tag_id))
 
+    # How many of this item to add (default 1, clamped to a sensible range).
+    try:
+        qty = int(request.args.get("qty", 1))
+    except (TypeError, ValueError):
+        qty = 1
+    qty = max(1, min(qty, 99))
+
     # Golden items are added to the cart like any other item — the shopper
     # cannot tell a golden item from a normal one until they pay.
     if "cart" not in session:
         session["cart"] = []
 
-    cart_item = {
-        "tag_id": tag_id,
-        "name": product["name"],
-        "price": product["price"],
-        "added_at": datetime.now().isoformat(),
-    }
-    session["cart"].append(cart_item)
+    # If the item is already in the cart, bump its quantity instead of
+    # adding a duplicate line.
+    for item in session["cart"]:
+        if item["tag_id"] == tag_id:
+            item["qty"] = item.get("qty", 1) + qty
+            break
+    else:
+        session["cart"].append({
+            "tag_id": tag_id,
+            "name": product["name"],
+            "price": product["price"],
+            "qty": qty,
+            "added_at": datetime.now().isoformat(),
+        })
     session.modified = True
 
-    return render_template("product.html", product=product, tag_id=None,
-                           note=f"{product['name']} added to cart!")
+    note = (f"{qty} × {product['name']} added to cart!" if qty > 1
+            else f"{product['name']} added to cart!")
+    return render_template("product.html", product=product, tag_id=None, note=note)
 
 
 @app.route("/cart/remove/<int:item_index>")
@@ -234,7 +262,7 @@ def remove_from_cart(item_index):
 def checkout():
     get_shopper()
     cart = session.get("cart", [])
-    cart_total = sum(float(item["price"].replace("$", "")) for item in cart)
+    cart_total = cart_total_value(cart)
     return render_template("checkout.html", cart_items=cart,
                            cart_total=f"${cart_total:.2f}")
 
@@ -247,7 +275,7 @@ def pay():
         return redirect(url_for("view_cart"))
 
     order_items = list(cart)
-    order_total = sum(float(item["price"].replace("$", "")) for item in cart)
+    order_total = cart_total_value(cart)
 
     # Reveal any secret golden tickets now that the shopper has paid.
     won = []
