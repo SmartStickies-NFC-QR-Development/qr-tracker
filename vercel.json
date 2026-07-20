@@ -5,7 +5,6 @@
     { "src": "*.html", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/static/(.*)", "dest": "/app/static/$1" },
     { "src": "/admin-dashboard\\.html", "dest": "/admin-dashboard.html" },
     { "src": "/(.*)", "dest": "app/main.py" }
   ]
