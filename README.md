@@ -28,7 +28,8 @@ which products are golden — and the store honors those choices in real time.
 ## Quick start
 
 ```bash
-cd qr-tracker
+git clone https://github.com/SmartStickies-NFC-QR-Development/VirtualGoldenTicket_TeamPrototype.git
+cd VirtualGoldenTicket_TeamPrototype
 python3.12 -m pip install -r requirements.txt
 python3.12 -c "from app.main import app; app.run(port=5001)"
 ```
@@ -36,7 +37,8 @@ python3.12 -c "from app.main import app; app.run(port=5001)"
 Then open <http://localhost:5001>. Full instructions — including Firebase project
 setup and creating your admin account — are in **[SETUP.md](SETUP.md)**.
 
-> **Note:** use Python 3.11/3.12 (not 3.14 on this machine — its `pip` is broken).
+> **Note:** use Python 3.11 or 3.12. Some Python 3.14 builds ship a broken `pip`
+> (an `expat`/XML error on import), so stick with 3.11/3.12.
 
 ## How golden tickets flow
 
@@ -50,7 +52,7 @@ Shopper buys item  ──►  Flask pay()  ──►  reveals Golden Ticket if g
 ## Project layout
 
 ```
-qr-tracker/
+VirtualGoldenTicket_TeamPrototype/
 ├─ app/
 │  ├─ main.py                 # Flask store: routes, cart, checkout, golden overlay
 │  └─ templates/
