@@ -74,7 +74,7 @@
 
     <div class="wrap">
         <p class="hello" id="hello">Welcome!</p>
-        <p class="sub">Golden-ticket items are highlighted in gold — those are today's winners.</p>
+        <p class="sub">Scan an item at checkout to find out if you've won a golden ticket!</p>
         <div id="msg"></div>
         <div id="grid"><div class="loading">Loading products…</div></div>
     </div>
@@ -109,12 +109,13 @@
         const gridEl = document.getElementById('grid');
 
         function card(id, p) {
+            // Golden status is intentionally NOT shown here — it stays secret
+            // until the shopper pays at checkout.
             return `
-                <div class="card ${p.golden ? 'golden' : ''}">
-                    <div class="tag">TAG ${id}</div>
+                <div class="card">
+                    <div class="tag">TAG ${id}${p.category ? ' · ' + p.category : ''}</div>
                     <div class="name">${p.name}</div>
                     <div class="price">${p.price}</div>
-                    ${p.golden ? '<div class="ribbon">🎟️ GOLDEN TICKET</div>' : ''}
                 </div>`;
         }
 

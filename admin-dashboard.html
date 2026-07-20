@@ -148,12 +148,32 @@
         const auth = getAuth(app);
 
         // Products the campaign starts with, used to seed an empty database.
+        // Mirrors the store catalog so the admin controls the same items.
         const STARTER_PRODUCTS = {
-            A17: { name: "Single-Origin Coffee Beans", price: "$12.00", golden: true },
-            B02: { name: "Oat Milk, 1L", price: "$4.50", golden: false },
-            C04: { name: "Dark Chocolate Bar", price: "$6.00", golden: true },
-            D09: { name: "Sparkling Water, 6-pack", price: "$5.25", golden: false },
-            F22: { name: "Aged Cheddar Wedge", price: "$9.75", golden: true },
+            P01: { name: "Bananas, bunch", price: "$1.80", golden: false, category: "Produce" },
+            P02: { name: "Gala Apples, 3 lb", price: "$4.20", golden: false, category: "Produce" },
+            P03: { name: "Baby Spinach, 10 oz", price: "$3.50", golden: false, category: "Produce" },
+            P04: { name: "Avocado", price: "$1.25", golden: true, category: "Produce" },
+            K01: { name: "Sourdough Loaf", price: "$4.75", golden: false, category: "Bakery" },
+            K02: { name: "Blueberry Muffins, 4-pack", price: "$5.50", golden: true, category: "Bakery" },
+            K03: { name: "Everything Bagels, 6-pack", price: "$4.00", golden: false, category: "Bakery" },
+            K04: { name: "Butter Croissant", price: "$2.75", golden: false, category: "Bakery" },
+            D01: { name: "Whole Milk, 1 gal", price: "$3.90", golden: false, category: "Dairy & Eggs" },
+            D02: { name: "Large Eggs, dozen", price: "$4.60", golden: false, category: "Dairy & Eggs" },
+            D03: { name: "Greek Yogurt, 32 oz", price: "$5.25", golden: false, category: "Dairy & Eggs" },
+            D04: { name: "Aged Cheddar Wedge", price: "$9.75", golden: true, category: "Dairy & Eggs" },
+            B01: { name: "Sparkling Water, 6-pack", price: "$5.25", golden: false, category: "Beverages" },
+            B02: { name: "Cold Brew Coffee, 1L", price: "$6.50", golden: true, category: "Beverages" },
+            B03: { name: "Orange Juice, 52 oz", price: "$4.30", golden: false, category: "Beverages" },
+            B04: { name: "Green Tea, 20-pack", price: "$3.75", golden: false, category: "Beverages" },
+            S01: { name: "Dark Chocolate Bar", price: "$6.00", golden: true, category: "Snacks" },
+            S02: { name: "Kettle Potato Chips", price: "$3.20", golden: false, category: "Snacks" },
+            S03: { name: "Trail Mix, 1 lb", price: "$5.80", golden: false, category: "Snacks" },
+            S04: { name: "Sea Salt Pretzels", price: "$2.90", golden: false, category: "Snacks" },
+            A01: { name: "Single-Origin Coffee Beans", price: "$12.00", golden: true, category: "Pantry" },
+            A02: { name: "Extra-Virgin Olive Oil", price: "$8.50", golden: false, category: "Pantry" },
+            A03: { name: "Penne Pasta, 1 lb", price: "$1.95", golden: false, category: "Pantry" },
+            A04: { name: "Creamy Peanut Butter", price: "$4.40", golden: false, category: "Pantry" },
         };
 
         // --- Admin gate: require a signed-in Firebase user listed in `admins`. ---
@@ -192,7 +212,7 @@
             return `
                 <div class="card ${p.golden ? 'on' : ''}" data-id="${id}">
                     <div class="info">
-                        <div class="tag">TAG ${id}</div>
+                        <div class="tag">TAG ${id}${p.category ? ' · ' + p.category : ''}</div>
                         <div class="name">${p.name}</div>
                         <div class="price">${p.price}</div>
                     </div>
